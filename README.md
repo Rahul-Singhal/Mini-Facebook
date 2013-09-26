@@ -1,4 +1,0 @@
-Mini-Facebook
-=============
-
-Database Project
