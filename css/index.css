@@ -1,0 +1,63 @@
+#login{
+display:none;
+}
+
+#sign_up {
+        -moz-border-radius: 6px;
+        background: #eef2f7;
+        -webkit-border-radius: 6px;
+        border: 3px solid #536376;
+        -webkit-box-shadow: rgba(0,0,0,.6) 0px 2px 12px;
+        -moz-box-shadow:  rgba(0,0,0,.6) 0px 2px 12px;
+        padding: 14px 22px;
+        width: 400px;
+        position: relative;
+        display: none;
+    }
+    #sign_up #sign_up_form {
+        margin-top: 13px;
+    }
+    #sign_up label {
+		text-align:left;
+        display: block;
+        margin-bottom: 10px; 
+        color: #666666;
+        font-size: .9em;
+    }
+  
+    #sign_up label input {
+        display: block;
+        width: 393px;
+        height: 31px;
+        background-position: -201px 0;
+        padding: 2px 8px;
+        font-size: 1.2em;
+        line-height: 31px;
+    }
+	
+#close_x{
+width: 24px; height: 24px;
+overflow: hidden; line-height: 1000px;
+display: block;
+position: absolute; top: 5px; right: 5px;
+background-position: -387px -92px;
+background-image:url(../img/Gnome-window-close.svg);
+}
+
+#seperate{
+
+height:2px;
+margin-top:5px;
+margin-bottom:5px;
+background:#666666;
+color:#666666;
+}
+
+#images{
+  border: 2px solid #1A3A91;
+}
+
+#button1{
+width:70px;
+background-image:url(login.gif);
+}
