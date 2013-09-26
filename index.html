@@ -53,8 +53,25 @@
 	    color: white ! important;
 	}
 	</style>
+
+	<script src="js/jquery.js" type="text/javascript"></script>
+   	<script src="js/bootstrap.min.js" type="text/javascript"></script>
+   	<script src="js/jquery.slimscroll.js" type="text/javascript"></script>
+
+   	<script>
+		function onLoadFunction(){
+
+	      	var x = $('#online-friends').height();
+			var y = $('#online-friends').width();
+      		$('#online-friends').slimScroll({
+	      	 height: x,
+	      	 width: y,
+	      	 wrapperClass:'slimScrollDiv3'
+	      	});	
+		}
+	</script>
   </head>
-  <body>
+  <body onload="onLoadFunction()">
   <div class="container-fluid max-height no-overflow">
 	<div class="row-fluid" id="top">
 		<div class="span10">
@@ -101,7 +118,7 @@
 						</ul>
 					  </li>
 					  
-					  <li><a href="#" style="color:white;">Messages</a></li>
+					  <li><a href="messages.html" style="color:white;">Messages</a></li>
 					  <li><a href="#" style="color:white;">Settings</a></li>
 					</ul>
 					</div>
@@ -111,7 +128,7 @@
 			
 			<div class="row-fluid " id="panelGuest">
 				<div class="span3" style="border-right:4px solid #007AA3;">
-					<img src="me.png" width="80%" class="img-polaroid">
+					<img src="img/me.png" width="80%" class="img-polaroid">
 					<br>
 					<br>
 					<ul class="nav nav-list" id="left-menu">
@@ -191,28 +208,27 @@ Aliquam pharetra, nunc a tempor sodales, orci sem pretium orci, quis pretium tel
 			</div>
 			<hr>
 			<div id="online" style="height:60%;">
-			<ul class="nav nav-list scrollable" id="left-menu" style="height:80%; width:90%;" >
-				<li class="nav-header">Online Friends</li>
-				<li><a href="#">Rahul Singhal</a></li>
-				<li><a href="#">Aditya Raj</a></li>
-				<li><a href="#">Nishit Bhandari</a></li>
-				<li><a href="#">Nishit Bhandari</a></li>
-				<li><a href="#">User1</a></li>
-				<li><a href="#">User2</a></li>
-				<li><a href="#">User3</a></li>
-				<li><a href="#">User4</a></li>
-				<li><a href="#">User5</a></li>
-				<li><a href="#">User6</a></li>
-				<li><a href="#">User7</a></li>
-				<li><a href="#">User8</a></li>
-				<li><a href="#">User9</a></li>
-			</ul>
-			<input style="width:95%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
+			<div id = "online-friends" class="scrollable" style="height:80%; width:90%;">
+				<ul class="nav nav-list" id="left-menu"  >
+					<li class="nav-header">Online Friends</li>
+					<li><a href="#">Rahul Singhal</a></li>
+					<li><a href="#">Aditya Raj</a></li>
+					<li><a href="#">Nishit Bhandari</a></li>
+					<li><a href="#">Nishit Bhandari</a></li>
+					<li><a href="#">User1</a></li>
+					<li><a href="#">User2</a></li>
+					<li><a href="#">User3</a></li>
+					<li><a href="#">User4</a></li>
+					<li><a href="#">User5</a></li>
+					<li><a href="#">User6</a></li>
+					<li><a href="#">User7</a></li>
+					<li><a href="#">User8</a></li>
+					<li><a href="#">User9</a></li>
+				</ul>
+			</div>
+			<input style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
 	  </div>
 
-  </div
-
-   <script src="http://code.jquery.com/jquery.js"></script>
-   <script src="js/bootstrap.min.js"></script>
+  </div>
   </body>
 </html>
