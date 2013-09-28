@@ -1,4 +1,31 @@
-<html>
+<?php
+  $error_flag = false;
+  $error_value;
+  if(isset($_GET['retry'])){
+    $error_type = $_GET['retry'];
+    $error_flag = true;
+    if($error_type == 'a'){
+      $error_value = "Wrong credentials!! Try Again!";
+    }
+    if($error_type == 'b'){
+      $error_value = "Wrong inputs!! Passwords don't match. Try Again!";
+    }
+    if($error_type == 'c'){
+      $error_value = "Wrong Email-ID. Try Again!";
+    }
+    if($error_type == 'd'){
+      $error_value = "User-ID already exists!! Choose a different user-ID!";
+    }
+    if($error_type == 'e'){
+      $error_value = "Connectivity problem!! Sorry, for the inconvenience. Try again!";
+    }
+  }
+  else{
+    $error_flag = false;
+  }
+?>
+
+  <html>
   <head>
     <title>Bootstrap 101 Template</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,9 +72,9 @@
             <div style="clear:both"> </div>
             <div id="sign_up">
               <h4>Please sign in using the form below</h4>
-              <form action="index.html" id="sign_up_form" method="post">
+              <form action="loginCheck.php" id="sign_up_form" method="post">
                 <label><strong>Username:</strong> <input type="text" name="username"/></label>
-                <label><strong>Password:</strong> <input type="password" name="passw"/></label>
+                <label><strong>Password:</strong> <input type="password" name="password"/></label>
                 <input type="hidden" name="url">
                 <button class="btn btn-primary" type="submit">Login</button>
               </form>
@@ -55,27 +82,28 @@
             </div>
           </div>
           <div>
+            <div class="alert alert-error span12 text-center" <?php if($error_flag) echo "style=\"display:block;\""; else echo "style=\"display:none;\""; ?>> <b><?php echo $error_value;?><b/></div>
             <div class="well" id="create-form">
                   <h3> Welcome to Mini-Facebook</h3>
                   <h4> Connect with your friends and the world around you. </h4>
-                  <form>
-                    <label>Username</label>
-                    <input type="text" value="" class="input-xlarge">
+                  <form action="createUser.php" method="post">
+                    <label>User-ID</label>
+                    <input type="text" value="" class="input-xlarge" name="new_userID">
                     <label>First Name</label>
-                    <input type="text" value="" class="input-xlarge">
+                    <input type="text" value="" class="input-xlarge" name="new_userFirst">
                     <label>Last Name</label>
-                    <input type="text" value="" class="input-xlarge">
+                    <input type="text" value="" class="input-xlarge" name="new_userLast">
                     <label>Email</label>
-                    <input type="text" value="" class="input-xlarge">
+                    <input type="text" value="" class="input-xlarge" name="new_emailID">
                     <label>New Password</label>
-                    <input type="password" value="" class="input-xlarge">
+                    <input type="password" value="" class="input-xlarge" name="new_pass1">
                     <label>Re-enter Password</label>
-                    <input type="password" value="" class="input-xlarge">
+                    <input type="password" value="" class="input-xlarge" name="new_pass2">
                     <label>Birthday</label>
                     <input type="text" class="datepicker" placeholder="Click me!">
                     <label>Gender</label>
-					<input type="radio" name="sex" value="male"><span> Male</span><br>
-					<input type="radio" name="sex" value="female"><span> Female</span>
+					<input type="radio" name="sexM" value="male"><span> Male</span><br>
+					<input type="radio" name="sexF" value="female"><span> Female</span>
                     <br>
                     <br>
                     <div>
