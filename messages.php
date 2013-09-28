@@ -137,7 +137,7 @@
 						    </form>
 					  </li>
 					  <li><a href="#" style="color:white;">Home</a></li>
-					  <li class="active"><a href="index.html">Profile</a></li>
+					  <li class="active"><a href="profile.html">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
 						   data-toggle="dropdown"
