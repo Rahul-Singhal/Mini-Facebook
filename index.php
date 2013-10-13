@@ -27,7 +27,7 @@
 
   <html>
   <head>
-    <title>Bootstrap 101 Template</title>
+    <title>Mini-Facebook</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
     <link href="css/datepicker.css" rel="stylesheet">
