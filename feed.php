@@ -1,3 +1,20 @@
+<?php
+	session_start();
+	if(!isset($_SESSION['userId'])){
+		header('Location: index.php');
+	}
+
+	require "getNotificationsAndRequests.php";
+
+	require "connect.inc.php";
+	$username = "select first_name,last_name from Profile where user_id = \"".$_SESSION['userId']."\";";
+	$_SESSION['username'] = mysql_fetch_assoc(mysql_query($username));
+	$query = "SELECT post_id,date_time,likes,data FROM `Post`,`Posts` WHERE `post_id` = `posts_post_id` and user_id= \"".$_SESSION['userId']."\" 
+			UNION SELECT Post.post_id,date_time,likes,data FROM `Post`,`Post_notification` where `Post`.`post_id` = `Post_notification`.`post_id` AND receiver_id= \"".$_SESSION['userId']."\" ORDER BY date_time desc;";
+	
+?>
+
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -115,8 +132,8 @@
 						    	<input type="text" class="search-query" placeholder="Search">
 						    </form>
 					  </li>
-					  <li><a href="#" style="color:white;">Home</a></li>
-					  <li class="active"><a href="#">Profile</a></li>
+					  <li class="active"><a href="#" style="color:white;">Home</a></li>
+					  <li ><a style="color:white;" href="profile.php">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
 						   data-toggle="dropdown"
@@ -125,10 +142,18 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						  <li><a href="#">Link1</a></li>
-						  <li><a href="#">Link2</a></li>
-						  <li><a href="#">Link3</a></li>
-						  <li><a href="#">Link4</a></li>
+						  <?php
+						  	$count = 0;
+							  foreach($_SESSION['notifications'] as $noti){
+							  	if($count > 6) break;
+							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$noti[1]."\" ");
+								$row1 = mysql_fetch_array($result1);
+							  	if($noti[0]==='post')echo "<li><a href=\"#\">New post by ".$row1['first_name']." ".$row1['last_name']."<br/>".$noti[2]."</a></li>";
+							  	else if($noti[0]==='comment')echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." commented on a post.<br/>".$noti[2]."</a></li>";
+							  	else echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." created an event.<br/>".$noti[2]."</a></li>";
+							  	$count++;
+							  }
+						  ?>
 						</ul>
 					  </li>
 					  
@@ -140,15 +165,18 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						  <li><a href="#">FR1</a></li>
-						  <li><a href="#">FR2</a></li>
-						  <li><a href="#">FR3</a></li>
-						  <li><a href="#">FR4</a></li>
+						  <?php
+							  foreach($_SESSION['requests'] as $req){
+							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$req[0]."\" ");
+								$row1 = mysql_fetch_array($result1);
+							  	echo "<li><a href=\"profile.php?user_id=".$req[0]."\">".$row1['first_name']." ".$row1['last_name']." sent you a request.<br/>".$req[1]."</a></li>";
+							  }
+						  ?>
 						</ul>
 					  </li>
 					  
-					  <li><a href="messages.html" style="color:white;">Messages</a></li>
-					  <li><a href="#" style="color:white;">Settings</a></li>
+					  <li><a href="messages.php?receiver=empty" style="color:white;">Messages</a></li>
+					  <li><a href="logout.php" style="color:white;">Logout</a></li>
 					</ul>
 					</div>
 					</div>
@@ -157,207 +185,100 @@
 			
 			<div class="row-fluid " id="panelGuest">
 				<div class="span3" style="border-right:4px solid #007AA3;">
-					<img src="img/me.png" width="80%" class="img-polaroid">
+					<?php
+						echo '<img src="data:image/jpeg;base64,'.base64_encode( $_SESSION['user_profile']['image'] ) . '" width="80%" class="img-polaroid"/>';
+					?>
 					<br>
 					<br>
 					<ul class="nav nav-list" id="left-menu">
 						<li class="nav-header">Favorites</li>
 						<li class="active"><a href="#">New Feed</a></li>
-						<li><a href="#">Messages</a></li>
+						<li><a href="messages.php?receiver=empty">Messages</a></li>
 						
 						<li class="nav-header">Events</li>
 						<li><a href="#">Upcoming</a></li>
 						<li><a href="#">Recent</a></li>
 						
-						<li class="nav-header">Friends</li>
-						<li><a href="#">List</a></li>
-						<li><a href="#">Requests</a></li>
-						<li><a href="#">Suggestions</a></li>
+						<li class="nav-header">Friends & Followers</li>
+						<li><a href="friendList.php">Friend List</a></li>
+						<li><a href="followerList.php">Follower List</a></li>
 						
 					</ul>
 				</div>		
 				<div class="span7 offset1">
-					<div class="post">
-						<div class="media">
-							<a class="pull-left" href="#">
-								<img class="media-object" src="img/rahul.jpeg" width="64px" height="64px">
-							</a>
-							<div class="media-body">
-								<h4 class="media-heading">Rahul Singhal</h4>	
-								Hey there!! this is the very first text post. lets see if the newline characters work. Let me put some more random text so as to check if the text remains aligned. Wow this design looks awesome.<br/>
-								Machaxx! :D
-								<div class="like-dislike">
-									<button type="button" class="btn btn-success btn-mini">
-										<i class="icon-large icon-thumbs-up"></i> Like									
+					<div>
+					<form method="post" action="newPost.php">
+					<textarea name="new_post" rows="6" style="width:100%;" placeholder="Share your thoughts!!"></textarea>
+					<button class="btn btn-inverse" type="submit"style="margin-bottom:30px; width:125px;">Post!</button>
+					</form>
+					</div>
+					
+					<?php if($query_out1 = mysql_query($query)){
+							while($_SESSION['post_info'] = mysql_fetch_assoc($query_out1)){	
+								$post_sender = "SELECT first_name,last_name,image from Profile,Posts where Profile.user_id = Posts.user_id and posts_post_id = \"".$_SESSION['post_info']['post_id']."\";";
+								$query_out2 = mysql_query($post_sender);
+								$_SESSION['post_sender'] = mysql_fetch_assoc($query_out2);
+					echo "<div class=\"post\" id = \"".$_SESSION['post_info']['post_id']."\">
+						<div class=\"media\">
+							<a class=\"pull-left\" href=\"#\">";
+							echo '<img src="data:image/jpeg;base64,'.base64_encode( $_SESSION['post_sender']['image'] ) . '" width="64px" height="64px" class="img-polaroid"/>';
+							echo "</a>
+							<div class=\"media-body\">
+									  
+	  
+    
+								<h4 class=\"media-heading\">".$_SESSION['post_sender']['first_name']." ".$_SESSION['post_sender']['last_name']."</h4>"	
+								.$_SESSION['post_info']['data']."
+								<div class=\"like-dislike\">
+									<form method=\"post\" action=\"like.php\">
+									<button type=\"submit\" name=\"like\" class=\"btn btn-success btn-mini\">
+										<i class=\"icon-large icon-thumbs-up\"></i> Like									
 									</button>
-									<button type="button" class="btn btn-danger btn-mini pull-right">
-										<i class="icon-large icon-thumbs-down"></i> Dislike									
+									<button type=\"submit\" name=\"dislike\" class=\"btn btn-danger btn-mini pull-right\">
+										<i class=\"icon-large icon-thumbs-down\"></i> Dislike									
 									</button>
+									<input type=\"hidden\" name=\"post_id\" class=\"span8\" style=\"margin:5px 10px 5px 15px;\" value=\"".$_SESSION['post_info']['post_id']."\">
+									</form>
 								</div>
-								<div style="background-color:#3D4A6C; padding:5px 10px 5px 10px; border-radius:10px;">
+								<div style=\"background-color:#3D4A6C; padding:5px 10px 5px 10px; border-radius:10px;\">
 									<div>
-										<span class="label label-info">65 Likes</span>
-										<span class="pull-right">
-											<span class="label label-success">12 October, 2013</span>
-											<span class="label label-success">8:45 AM</span>
+										<span class=\"label label-info\">".$_SESSION['post_info']['likes']." likes </span>
+										<span class=\"pull-right\">
+											<span class=\"label label-success\">".date('F j,Y,g:i a',strtotime($_SESSION['post_info']['date_time']))."</span>
 										</span>
 									</div>
-									<ul class="comments">
-										<li>
-											<span class="label label-default">Mayank</span> Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment
+									<ul class=\"comments\">";
+									$comment_query = "Select * FROM Comment WHERE Comment.post_id = \"".$_SESSION['post_info']['post_id']."\" ORDER BY date_time desc;";
+										$index = 1;
+										if($query_out = mysql_query($comment_query)){
+												while($_SESSION['comment_info'] = mysql_fetch_assoc($query_out)){
+												$comment_sender = "SELECT first_name, last_name,image from Profile,Comment where Profile.user_id = Comment.sender_id and Comment.post_id = \"".$_SESSION['comment_info']['post_id']."\" and Comment.comment_id = \"".$_SESSION['comment_info']['comment_id']."\";";
+												$query_out3 = mysql_query($comment_sender);
+												$_SESSION['comment_sender'] = mysql_fetch_assoc($query_out3);
+										echo "<li id = \"".$_SESSION['comment_info']['post_id'].$_SESSION['comment_info']['comment_id']."\">
+											<span class=\"label label-default\">".$_SESSION['comment_sender']['first_name']." ".$_SESSION['comment_sender']['last_name']."</span>".$_SESSION['comment_info']['data']."
 											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Rahul</span> Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Mayank</span> Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Rahul</span> Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Mayank</span> Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Rahul</span>
-											<input type="text" placeholder="Comment here!" class="span10" style="margin:5px 10px 5px 15px;">
+											<span class=\"comment-timestamp\">".date('F j,Y,g:i a',strtotime($_SESSION['comment_info']['date_time']))."</span>
+										</li>";
+											//$index = (int)($_SESSION['comment_info']['comment_id']);
+											$index++;
+										
+										 }} 
+										
+										echo "<li name = \"".$_SESSION['post_info']['post_id'].$index."\">
+											<form method=\"post\" action=\"newComment.php\">
+											<span class=\"label label-default\">".$_SESSION['username']['first_name']." ".$_SESSION['username']['last_name']."</span>
+											<input name=\"commentData\" type=\"text\" onkeydown=\"if (event.keyCode == 13) { this.form.submit(); return false; }\" placeholder=\"Comment here!\" style=\"margin:5px 0px 5px 0px; width:74%;\">
+											<input type=\"hidden\" name=\"comment_id\" class=\"span8\" style=\"margin:5px 10px 5px 15px;\" value=\"".$_SESSION['post_info']['post_id']."_".$index."\">
+											</form>
 										</li>
 									</ul>
 								</div>
 							</div>
+							
 						</div>
 					</div>
-					<hr/>
-					<div class="post">
-						<div class="media">
-							<a class="pull-left" href="#">
-								<img class="media-object" src="img/rahul.jpeg" width="64px" height="64px">
-							</a>
-							<div class="media-body">
-								<h4 class="media-heading">Rahul Singhal</h4>	
-								Hey there!! this is the very first text post. lets see if the newline characters work. Let me put some more random text so as to check if the text remains aligned.
-								<div class="like-dislike">
-									<button type="button" class="btn btn-success btn-mini">
-										<i class="icon-large icon-thumbs-up"></i> Like									
-									</button>
-									<button type="button" class="btn btn-danger btn-mini pull-right">
-										<i class="icon-large icon-thumbs-down"></i> Dislike									
-									</button>
-								</div>
-								<div style="background-color:#3D4A6C; padding:5px 10px 5px 10px; border-radius:10px;">
-									<div>
-										<span class="label label-info">65 Likes</span>
-										<span class="pull-right">
-											<span class="label label-success">12 October, 2013</span>
-											<span class="label label-success">8:45 AM</span>
-										</span>
-									</div>
-									<ul class="comments">
-										<li>
-											<span class="label label-default">Mayank</span> Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Rahul</span> Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Mayank</span> Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Rahul</span> Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Mayank</span> Test Comment
-											<br/>
-											<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-										</li>
-										<li>
-											<span class="label label-default">Rahul</span>
-											<input type="text" placeholder="Comment here!" class="span10" style="margin:5px 10px 5px 15px;">
-										</li>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>
-					<hr/>
-					<div class="post">
-							<div class="media">
-						<a class="pull-left" href="#">
-							<img class="media-object" src="img/rahul.jpeg" width="64px" height="64px">
-						</a>
-						<div class="media-body">
-							<h4 class="media-heading">Rahul Singhal</h4>	
-							Hey there!! this is the very first text post. lets see if the newline characters work. Let me put some more random text so as to check if the text remains aligned.
-							<div class="like-dislike">
-								<button type="button" class="btn btn-success btn-mini">
-									<i class="icon-large icon-thumbs-up"></i> Like									
-								</button>
-								<button type="button" class="btn btn-danger btn-mini pull-right">
-									<i class="icon-large icon-thumbs-down"></i> Dislike									
-								</button>
-							</div>
-							<div style="background-color:#3D4A6C; padding:5px 10px 5px 10px; border-radius:10px;">
-								<div>
-									<span class="label label-info">65 Likes</span>
-									<span class="pull-right">
-										<span class="label label-success">12 October, 2013</span>
-										<span class="label label-success">8:45 AM</span>
-									</span>
-								</div>
-								<ul class="comments">
-									<li>
-										<span class="label label-default">Mayank</span> Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment Test Comment
-										<br/>
-										<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-									</li>
-									<li>
-										<span class="label label-default">Rahul</span> Test Comment
-										<br/>
-										<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-									</li>
-									<li>
-										<span class="label label-default">Mayank</span> Test Comment
-										<br/>
-										<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-									</li>
-									<li>
-										<span class="label label-default">Rahul</span> Test Comment
-										<br/>
-										<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-									</li>
-									<li>
-										<span class="label label-default">Aditya</span> Test Comment
-										<br/>
-										<span class="comment-timestamp">12 October, 2013 at 9:10 AM</span>
-									</li>
-									<li>
-											<span class="label label-default">Rahul</span>
-											<input type="text" placeholder="Comment here!" class="span10" style="margin:5px 10px 5px 15px;">
-									</li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					</div>
-					<hr/>
+					<hr/>";}}?>
 
 
 				</div>
@@ -377,19 +298,16 @@
 			<div id = "online-friends" class="scrollable" style="height:80%; width:90%;">
 				<ul class="nav nav-list" id="left-menu"  >
 					<li class="nav-header">Online Friends</li>
-					<li><a href="#">Rahul Singhal</a></li>
-					<li><a href="#">Aditya Raj</a></li>
-					<li><a href="#">Nishit Bhandari</a></li>
-					<li><a href="#">Nishit Bhandari</a></li>
-					<li><a href="#">User1</a></li>
-					<li><a href="#">User2</a></li>
-					<li><a href="#">User3</a></li>
-					<li><a href="#">User4</a></li>
-					<li><a href="#">User5</a></li>
-					<li><a href="#">User6</a></li>
-					<li><a href="#">User7</a></li>
-					<li><a href="#">User8</a></li>
-					<li><a href="#">User9</a></li>
+					<?php 
+					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";			
+					if($query_out1 = mysql_query($friends)){
+							while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){
+								$online = "select first_name,last_name from Profile,User where Profile.user_id = User.user_id and User.user_id = \"".$_SESSION['friends']['id']."\" and User.online = 1;";
+								$query_out3 = mysql_query($online);
+								$_SESSION['online'] = mysql_fetch_assoc($query_out3);
+		
+			  		echo "<li><a href=\"#\">".$_SESSION['online']['first_name']." ".$_SESSION['online']['last_name']."</a></li>";
+					}}?>
 				</ul>
 			</div>
 			<input style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
