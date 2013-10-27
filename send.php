@@ -5,7 +5,11 @@
 	}
    date_default_timezone_set('Asia/Kolkata');
 	require "connect.inc.php";
+<<<<<<< HEAD
    ///Insert a new row in the chat table
+=======
+   //Insert a new row in the chat table
+>>>>>>> d688a21570532c8ba622a4a56f8f430db2bcaf60
    $sender = $_SESSION['userId'];
    $receiver = $_GET["name"];
    $message = $_GET["message"];
