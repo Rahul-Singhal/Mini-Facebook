@@ -1,3 +1,5 @@
+<!DOCTYPE HTML>
+
 <?php
   $error_flag = false;
   $error_value;
@@ -100,10 +102,10 @@
                     <label>Re-enter Password</label>
                     <input type="password" value="" class="input-xlarge" name="new_pass2">
                     <label>Birthday</label>
-                    <input type="text" class="datepicker" placeholder="Click me!">
+                    <input type="date" name="new_date">
                     <label>Gender</label>
-					<input type="radio" name="sexM" value="male"><span> Male</span><br>
-					<input type="radio" name="sexF" value="female"><span> Female</span>
+					<input type="radio" name="new_gender" value="MALE" checked="checked"><span> Male</span><br>
+					<input type="radio" name="new_gender" value="FEMALE"><span> Female</span>
                     <br>
                     <br>
                     <div>

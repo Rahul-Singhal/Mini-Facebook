@@ -7,6 +7,9 @@
       $verified = false;
     }
     if($verified){
+      session_start();
+      $_SESSION['userId']=$_POST['username'];
+      makeUserOnline($_SESSION['userId']);
       header('Location: profile.php');
       exit();
     }else{
@@ -17,7 +20,7 @@
 
   function verifyUser($inp_ID, $inp_pass){
     require "connect.inc.php";
-    $query = "SELECT * FROM `loginData` WHERE `user_id` = '$inp_ID' AND `password` = '$inp_pass'";
+    $query = "SELECT * FROM `User` WHERE `user_id` = '$inp_ID' AND `password` = '$inp_pass'";
     if($query_out = mysql_query($query)){
       while($row = mysql_fetch_assoc($query_out)){
 
@@ -28,5 +31,16 @@
     }
     return false;
   }
+
+  function makeUserOnline($userID){
+    $query = "UPDATE `User` SET `online` = 1 WHERE `user_id` = '$userID'";
+    if(mysql_query($query)){
+    }
+    else{
+      echo "error! invalid user id!";
+      exit;
+    }
+  }
+
 
 ?>

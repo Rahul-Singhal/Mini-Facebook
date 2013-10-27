@@ -1,10 +1,25 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
+<?php
+	session_start();
+	if(!isset($_SESSION['userId'])){
+		header('Location: index.php');
+	}
+	require "getNotificationsAndRequests.php";
+
+	require "connect.inc.php";
+	$query = "SELECT * FROM `Profile` WHERE `user_id` = \"".$_SESSION['userId']."\"";
+    if($query_out = mysql_query($query)){
+      $_SESSION['user_profile'] = mysql_fetch_assoc($query_out);
+    }
+?>
+
 <html>
   <head>
     <title>Mini-Facebook</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<link href="css/datepicker.css" rel="stylesheet">
 	<style type="text/css">
 	body, html {
                 height: 100%;
@@ -55,6 +70,7 @@
 	</style>
 
 	<script src="js/jquery.js" type="text/javascript"></script>
+	<script src="js/bootstrap-datepicker.js" type="text/javascript" charset="utf-8"></script>
    	<script src="js/bootstrap.min.js" type="text/javascript"></script>
    	<script src="js/jquery.slimscroll.js" type="text/javascript"></script>
 
@@ -70,6 +86,95 @@
 	      	});	
 		}
 	</script>
+	
+	<?php if(isset($_GET['editBasicInfo'])) $editBI = $_GET['editBasicInfo']; 
+		  if(isset($_GET['editEduInfo'])) $editEI = $_GET['editEduInfo'];
+		  if(isset($_GET['editContactInfo'])) $editCI = $_GET['editContactInfo'];
+		  if(isset($_GET['editProfilePhoto'])) $editPP = $_GET['editProfilePhoto'];
+		  if(isset($_GET['user_id'])) {
+			//echo "<br> <br> <br> <br> <br> <br>";
+			//echo $_GET['user_id'];
+			$user_id_page = $_GET['user_id'];
+			$query = "SELECT * FROM `Profile` WHERE `user_id` = \"".$user_id_page."\"";
+			if($query_out = mysql_query($query)){
+			  $_SESSION['user_profile'] = mysql_fetch_assoc($query_out);
+			}
+			
+			$isfriendqry = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" and user_id1 = \"".$user_id_page."\" 
+				UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\" and user_id2 = \"".$user_id_page."\";";
+				
+			$isreqfriendqry = "select `sender_id` from `Request` where sender_id='" . $_SESSION['userId'] . "' and receiver_id='$user_id_page';";
+			
+			$isfriendreqqry = "select `sender_id` from `Request` where sender_id='$user_id_page' and receiver_id='" . $_SESSION['userId'] . "';";
+			//echo $isfriendqry;
+			//echo $isfriendreqry;
+			//exit();
+			//exit();
+			
+			$isfriend = 'false';
+			$isreqfriend = 'false';
+			$isfriendreq = 'false';
+			
+			if($query_out_isfriend = mysql_query($isfriendqry)){
+			  $friendddd = mysql_fetch_assoc($query_out_isfriend);
+			  if(isset($friendddd) && !empty($friendddd)){
+				$isfriend = 'true';
+				$isreqfriend = 'false';
+				$isfriendreq = 'false';
+			  }
+			  else {
+				$isfriend = 'false';
+				$isreqfriend = 'false';
+				$isfriendreq = 'false';
+			
+				 if($query_out_isreqfriend = mysql_query($isreqfriendqry)){
+				  $isfriend = 'false';
+				  //echo "HERe";
+				  $reqfriendddd = mysql_fetch_assoc($query_out_isreqfriend);
+				  if(isset($reqfriendddd) && !empty($reqfriendddd)){
+					$isreqfriend = 'true';
+					$isfriendreq = 'false';
+				  }
+				  else {
+					$isreqfriend = 'false';
+					$isfriendreq = 'false';
+					
+					if($query_out_isfriendreq = mysql_query($isfriendreqqry)){
+					  $isreqfriend = 'false';
+					  $frienddddreq = mysql_fetch_assoc($query_out_isfriendreq);
+					  if(isset($frienddddreq) && !empty($frienddddreq)){
+						$isfriendreq = 'true';
+					  }
+					  else $isfriendreq = 'false';
+					}
+				  }
+				}
+				}
+			}
+			else $isfriendreq = 'false';
+
+			////  Follower ////////////////////////////////
+			$isfollowerqry = "select followed_user_id as id from Follow where followedby_user_id = \"".$_SESSION['userId']."\" and followed_user_id = \"".$user_id_page."\";";
+			//echo $isfollowerqry;
+			//exit();
+			if($query_out_isfollower = mysql_query($isfollowerqry)){
+			  $followed = mysql_fetch_assoc($query_out_isfollower);
+			  if(isset($followed) && !empty($followed)){
+				$isfollowed = 'true';
+			  }
+			  else $isfollowed = 'false';
+			}
+			else $isfollowed = 'false';
+			  
+			
+			//////////////////////////////////////////////
+		}
+		  if(isset($_GET['previewPhoto'])){
+			$previewImage='true';
+			$image = $_GET['fileName'];
+		  }
+
+	?>
   </head>
   <body onload="onLoadFunction()">
   <div class="container-fluid max-height no-overflow">
@@ -79,15 +184,15 @@
 				<div >
 					<div class="navbar">
 					<div class="navbar-inner">
-						<a class="brand offset1" href="#">Mini-Facebook</a>
+						<a class="brand offset1" href="feed.php">Mini-Facebook</a>
 					<ul class="nav">
 					  <li>
 					       <form class="navbar-search pull-left">
 						    	<input type="text" class="search-query" placeholder="Search">
 						    </form>
 					  </li>
-					  <li><a href="#" style="color:white;">Home</a></li>
-					  <li class="active"><a href="#">Profile</a></li>
+					  <li><a href="feed.php" style="color:white;">Home <span class="badge">42</span> </a></li>
+					  <li class="active"><a style="color:white;" href="#">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
 						   data-toggle="dropdown"
@@ -96,10 +201,18 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						  <li><a href="#">Link1</a></li>
-						  <li><a href="#">Link2</a></li>
-						  <li><a href="#">Link3</a></li>
-						  <li><a href="#">Link4</a></li>
+						   <?php
+						  	$count = 0;
+							  foreach($_SESSION['notifications'] as $noti){
+							  	if($count > 6) break;
+							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$noti[1]."\" ");
+								$row1 = mysql_fetch_array($result1);
+							  	if($noti[0]==='post')echo "<li><a href=\"#\">New post by ".$row1['first_name']." ".$row1['last_name']."<br/>".$noti[2]."</a></li>";
+							  	else if($noti[0]==='comment')echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." commented on a post.<br/>".$noti[2]."</a></li>";
+							  	else echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." created an event.<br/>".$noti[2]."</a></li>";
+							  	$count++;
+							  }
+						  ?>
 						</ul>
 					  </li>
 					  
@@ -111,15 +224,18 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						  <li><a href="#">FR1</a></li>
-						  <li><a href="#">FR2</a></li>
-						  <li><a href="#">FR3</a></li>
-						  <li><a href="#">FR4</a></li>
+						  <?php
+							  foreach($_SESSION['requests'] as $req){
+							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$req[0]."\" ");
+								$row1 = mysql_fetch_array($result1);
+							  	echo "<li><a href=\"profile.php?user_id=".$req[0]."\">".$row1['first_name']." ".$row1['last_name']." sent you a request.<br/>".$req[1]."</a></li>";
+							  }
+						  ?>
 						</ul>
 					  </li>
 					  
-					  <li><a href="messages.html" style="color:white;">Messages</a></li>
-					  <li><a href="#" style="color:white;">Settings</a></li>
+					  <li><a href="messages.php?receiver=empty" style="color:white;">Messages</a></li>
+					  <li><a href="logout.php" style="color:white;">Logout</a></li>
 					</ul>
 					</div>
 					</div>
@@ -128,72 +244,303 @@
 			
 			<div class="row-fluid " id="panelGuest">
 				<div class="span3" style="border-right:4px solid #007AA3;">
-					<img src="img/me.png" width="80%" class="img-polaroid">
+					
+					<?php
+					if (isset($previewImage) && !isset($user_id_page)) echo "<img src='upload/" . $image . "' width='80%' class='img-polaroid'>";
+					else echo '<img src="data:image/jpeg;base64,'.base64_encode( $_SESSION['user_profile']['image'] ) . '" width="80%" class="img-polaroid"/>';
+					?>
 					<br>
 					<br>
+						
+						<?php
+						if (!((isset($editPP) && $editPP=='true') || isset($previewImage)) && !isset($user_id_page)) {
+						echo '
+						<form action="profile.php" method="get">
+						<input type="hidden" value="true" name="editProfilePhoto">
+						<button type="submit" class="btn btn-default btn-lg">
+						  <i class="icon-edit"></i> Edit
+						</button>
+						</form>';
+						}
+						?>
+					
+					
+					<?php
+					if (((isset($editPP) && $editPP=='true') || isset($previewImage)) && !isset($user_id_page)) {
+						if (isset($previewImage)){
+							echo '<form action="saveUserInfo.php" method="post" enctype="multipart/form-data">
+							<input type="hidden" name="image" value="'. $image .'">
+							<button type="submit" class="btn btn-default btn-lg">
+							  <i class="icon-ok-circle"></i> Save
+							</button>
+							</form>
+							';
+							
+							echo '<form action="profile.php" method="post" enctype="multipart/form-data">
+							<button type="submit" class="btn btn-default btn-lg">
+							  <i class="icon-remove-circle"></i> Cancel
+							</button>
+							</form>
+							';
+						}
+						echo ' 
+						<form action="uploadFile.php" method="post" enctype="multipart/form-data">
+							<input id="lefile" type="file" style="display:none" name="photoFile">
+							<div class="input-append">
+							<input id="photoCover" class="input-small" type="text">
+							<a class="btn" onclick=\'$("input[id=lefile]").click();\'>Browse</a>
+							</div>
+							<button type="submit" class="btn btn-default btn-lg">
+							  <i class="icon-upload"></i> Upload
+							</button>
+						</form>';
+					}
+					?>
+					
 					<ul class="nav nav-list" id="left-menu">
 						<li class="nav-header">Favorites</li>
-						<li class="active"><a href="#">New Feed</a></li>
-						<li><a href="#">Messages</a></li>
+						<li><a href="feed.php">News Feed</a></li>
+						<li><a href="messages.php?receiver=empty">Messages</a></li>
 						
 						<li class="nav-header">Events</li>
 						<li><a href="#">Upcoming</a></li>
 						<li><a href="#">Recent</a></li>
 						
-						<li class="nav-header">Friends</li>
-						<li><a href="#">List</a></li>
-						<li><a href="#">Requests</a></li>
-						<li><a href="#">Suggestions</a></li>
+						<li class="nav-header">Friends & Followers</li>
+						<li><a href="friendList.php">Friend List</a></li>
+						<li><a href="followerList.php">Follower List</a></li>
 						
 					</ul>
 				</div>		
 				<div class="span8 ">
-					<h3>Mayank Dehgal</h3>
+					<?php
+					////////////// REPLACE  /////////////////////////////////////////////////////////////
+					
+					if(isset($user_id_page)){
+						if($isfriend == 'true')
+						echo " <form action='makeFriend.php' method='post' style='float:right'>
+							<input type='hidden' name='makeFriend' value='$user_id_page'>
+							<input type='hidden' name='adddel' value='del'>
+							<input type='hidden' name='redirect' value='profile.php'>
+							<button type='submit' class='btn btn-danger'>
+							  <i class='icon-remove-circle'></i> Unfriend
+							</button>
+							</form>";
+						
+						else if ($isreqfriend == 'true')
+							echo " 
+							<button type='submit' class='btn btn-success' style='float:right'>
+							  <i class='icon-ok-circle'></i> Request sent
+							</button>
+							";
+							
+						else if ($isfriendreq == 'true')
+							echo " <form action='makeFriend.php' method='post' style='float:right'>
+							<input type='hidden' name='makeFriend' value='$user_id_page'>
+							<input type='hidden' name='adddel' value='accept'>
+							<input type='hidden' name='redirect' value='profile.php'>
+							<button type='submit' class='btn btn-success'>
+							  <i class='icon-ok-circle'></i> Accept as Friend
+							</button>
+							</form>";
+						
+						else
+						echo " <form action='makeFriend.php' method='post' style='float:right'>
+							<input type='hidden' name='makeFriend' value='$user_id_page'>
+							<input type='hidden' name='adddel' value='add'>
+							<input type='hidden' name='redirect' value='profile.php'>
+							<button type='submit' class='btn btn-success'>
+							  <i class='icon-ok-circle'></i> Add Friend
+							</button>
+							</form>";
+							
+						if ($isfollowed == 'true')
+						echo " <form action='makeFollower.php' method='post' style='float:right; margin-right:12px' >
+							<input type='hidden' name='makeFollower' value='$user_id_page'>
+							<input type='hidden' name='adddel' value='del'>
+							<input type='hidden' name='redirect' value='profile.php'>
+							<button type='submit' class='btn btn-danger'>
+							  <i class='icon-remove-circle'></i> Unfollow
+							</button>
+							</form>";
+							
+						else
+						echo " <form action='makeFollower.php' method='post' style='float:right; margin-right:12px'>
+							<input type='hidden' name='makeFollower' value='$user_id_page'>
+							<input type='hidden' name='adddel' value='add'>
+							<input type='hidden' name='redirect' value='profile.php'>
+							<button type='submit' class='btn btn-success'>
+							  <i class='icon-ok-circle'></i> Follow
+							</button>
+							</form>";
+					}
+					
+					////////////// REPLACE  /////////////////////////////////////////////////////////////
+					?>
+					<h3 style="float:left"><?php echo $_SESSION['user_profile']['first_name'].' '.$_SESSION['user_profile']['middle_name'].' '.$_SESSION['user_profile']['last_name']; ?></h3>
+					<div style=	'clear:both'></div>
+					<form action="profile.php" method="get">
+						<input type='hidden' value='true' name='editBasicInfo'>
+						<?php if (!isset($editBI) && !isset($user_id_page)){
+						echo '
+						<button type="submit" class="btn btn-default btn-lg" style="float:right">
+						  <i class="icon-edit"></i> Edit
+						</button>';
+						}
+						?>
+					</form>
+					
+					<?php if (isset($editBI) && !isset($user_id_page)) {
+						echo "<form action='saveUserInfo.php' method='post'>"; 
+						echo '
+						<button type="submit" class="btn btn-default btn-lg" style="float:right">
+						  <i class="icon-ok-circle"></i> Save
+						</button>';}
+					?>
 					<dl class="dl-horizontal">
 						<h4>Basic Information	</h4>
 						<dt>Age</dt>
-						<dd>20</dd>
+						<?php if (isset($editBI) && $editBI=='true' && !isset($user_id_page)){
+								echo "<dd> <input type='number' name='age' value='" . $_SESSION['user_profile']['age'] . "'> </dd>";
+							  }
+							  else echo "<dd>". $_SESSION['user_profile']['age'] ."</dd>"; 
+						?>
 						<dt>Date of Birth</dt>
-						<dd>5th March, 1994</dd>
+						<?php if (isset($editBI) && $editBI=='true' && !isset($user_id_page)){
+								echo "<dd> <input type='date' name='dob' value='" . $_SESSION['user_profile']['dob'] . "'> </dd>";
+							}
+							else echo "<dd>" . $_SESSION['user_profile']['dob'] . "</dd>"; 
+						?>
 						<dt>Relationship Status</dt>
-						<dd>Occupied</dd>
+						<?php if (isset($editBI) && $editBI=='true' && !isset($user_id_page)){
+								echo "<dd> <input type='number' name='relationStat' value='" . $_SESSION['user_profile']['relationship_status'] . "'> </dd>";
+							}
+							else {
+								echo "<dd>";
+								if($_SESSION['user_profile']['relationship_status'] == 1) echo "In a relationship"; else echo "Single"; 
+								echo "</dd>"; 
+							}
+						?>
 						<dt>Gender</dt>
-						<dd>Male</dd>
+						<?php if (isset($editBI) && $editBI=='true' && !isset($user_id_page)){
+								echo "<dd>
+											<input type='radio' name='sex' value='MALE' checked='checked' ><span> Male</span><br>
+											<input type='radio' name='sex' value='FEMALE'><span> Female</span><br><br> 
+										   </dd>";
+							}
+							else echo "<dd>" . ucfirst(strtolower($_SESSION['user_profile']['gender'])) . "</dd>"; 
+						?>
 					</dl>
+					<?php if (isset($editBI) && !isset($user_id_page)) echo "</form>"; ?>
 					
+					<form action="profile.php" method="get">
+						<input type='hidden' value='true' name='editEduInfo'>
+						<?php
+						if (!isset($editEI) && !isset($user_id_page)){
+						echo '
+						<button type="submit" class="btn btn-default btn-lg" style="float:right">
+						  <i class="icon-edit"></i> Edit
+						</button>';
+						}
+						?>
+					</form>
+					
+					<?php if (isset($editEI) && !isset($user_id_page)) {
+						echo "<form action='saveUserInfo.php' method='post'>"; 
+						echo '
+						<button type="submit" class="btn btn-default btn-lg" style="float:right">
+						  <i class="icon-ok-circle"></i> Save
+						</button>';}
+					?>
 					<dl class="dl-horizontal">
 						<h4>Education</h4>
 						<dt>Graduation</dt>
-						<dd>IIT Bombay <small> - 2015 </small> </dd>
+						<?php if (isset($editEI) && $editEI=='true' && !isset($user_id_page)) echo "<dd> 
+																			<input type='text' name='grad_school' value='" . $_SESSION['user_profile']['graduation_school'] . "'>
+																		   </dd>";
+							  else echo "<dd>" . $_SESSION['user_profile']['graduation_school'] . "</dd>"; 
+							  //echo "<dd>IIT Bombay <small> - 2015 </small> </dd>"; 
+						?>
 						<dt>High School</dt>
-						<dd>Maa Bharti <small> - 2011 </small> </dd>
+						<?php if (isset($editEI) && $editEI=='true' && !isset($user_id_page)) echo "<dd> 
+																			<input type='text' name='high_school' value='" . $_SESSION['user_profile']['high_school'] . "'>
+																		   </dd>";
+							  else echo "<dd>" . $_SESSION['user_profile']['high_school'] . "</dd>"; 
+						?>
 						<dt>Primary School</dt>
-						<dd>S.V.P.V <small> - 2009 </small> </dd>
+						<?php if (isset($editEI) && $editEI=='true' && !isset($user_id_page)) echo "<dd> 
+																			<input type='text' name='prim_school' value='" . $_SESSION['user_profile']['primary_school'] . "'>
+																		   </dd>";
+							  else echo "<dd>" . $_SESSION['user_profile']['primary_school'] . "</dd>"; 
+						?>
+						
 					</dl>
+					<?php if (isset($editEI) && !isset($user_id_page)) echo "</form>"; ?>
 					
+					<form action="profile.php" method="get">
+						<input type='hidden' value='true' name='editContactInfo'>
+						<?php
+						if (!isset($editCI) && !isset($user_id_page)){
+						echo '
+						<button type="submit" class="btn btn-default btn-lg" style="float:right">
+						  <i class="icon-edit"></i> Edit
+						</button>';
+						}
+						?>
+					</form>
+					
+					<?php if (isset($editCI) && !isset($user_id_page)) {
+						echo "<form action='saveUserInfo.php' method='post'>"; 
+						echo '
+						<button type="submit" class="btn btn-default btn-lg" style="float:right">
+						  <i class="icon-ok-circle"></i> Save
+						</button>';}
+					?>
 					<dl class="dl-horizontal">
 						<h4>Contact Information</h4>
-						<dt>Address</dt>
-						<dd>
-							<address>
-								C/403, <br>
-								Chandan Avenue, <br>
-								Mira Road, <br>
-								Maharashtra
-							</address>
-						</dd>
+						<dt>Address:-</dt>
+						
+						<?php
+						if (isset($editCI) && $editCI=='true' && !isset($user_id_page)) echo "	<br> <br>
+																		<dt> House number : </dt> <dd> <input type='text' name='houseno' value='" . $_SESSION['user_profile']['house_no'] . "'> </dd>
+																		<dt> Street : </dt> <dd> <input type='text' name='street' value='" . $_SESSION['user_profile']['street'] . "'> </dd>
+																		<dt> PIN code : </dt> <dd> <input type='number' name='pin_code' value='" . $_SESSION['user_profile']['pin'] . "'> </dd>
+																		<dt> City : </dt> <dd> <input type='text' name='city' value='" . $_SESSION['user_profile']['city'] . "'> </dd>
+																		<dt> State : </dt> <dd> <input type='text' name='state' value='" . $_SESSION['user_profile']['state'] . "'> </dd>
+																		";
+							  else echo "<dd>
+											<address>" .
+											$_SESSION['user_profile']['house_no'].' '.$_SESSION['user_profile']['street'] . ", <br>" .
+											$_SESSION['user_profile']['city']. ", <br>" .
+											$_SESSION['user_profile']['pin']. ", <br>" .
+											$_SESSION['user_profile']['state'].', '.$_SESSION['user_profile']['country'] . 
+											"</address>
+										</dd>"; 
+						?>
+						
 						<dt>Phone Number</dt>
-						<dd>8652549510</dd>
+						<?php if (isset($editCI) && $editCI=='true' && !isset($user_id_page)) echo "<dd> 
+																			<input type='number' name='phone_no' value='" . $_SESSION['user_profile']['phone_no'] . "'>
+																		   </dd>";
+							  else echo "<dd>" . $_SESSION['user_profile']['phone_no'] . "</dd>"; 
+						?>
 						<dt>Email-id</dt>
-						<dd> <a href="mailto:#">mayankdehgal94@gmail.com</a> </dd>
+						<?php if (isset($editCI) && $editCI=='true' && !isset($user_id_page)) echo "<dd> 
+																			<input type='email' name='email_id' value='" . $_SESSION['user_profile']['email_id'] . "'>
+																		   </dd>";
+							  else echo "<dd> <a href='mailto:#'>" . $_SESSION['user_profile']['email_id'] . "</a> </dd>"; 
+						?>
 						<dt>Quote</dt>
-						<dd>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur molestie pharetra lacus, a tincidunt elit fermentum ac. Praesent ac mauris nisl. Cras aliquet imperdiet nunc, vestibulum faucibus urna laoreet eu. Aliquam pharetra leo ut mauris tempus dignissim. Aenean mollis dui sed orci hendrerit vitae hendrerit nisi convallis. Ut id libero a metus ullamcorper consectetur. Suspendisse sed risus erat. In pharetra velit condimentum nisl interdum sed iaculis mi consectetur. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas vulputate consectetur urna, a dignissim odio vestibulum a.
-Aliquam pharetra, nunc a tempor sodales, orci sem pretium orci, quis pretium tellus purus ac nunc. Morbi dignissim urna eget sapien laoreet volutpat. Sed lacus lorem, vulputate eu aliquet non, egestas vel augue. Fusce gravida arcu at elit pharetra luctus. Curabitur pretium mi vitae purus posuere lobortis. Fusce pulvinar, mi at eleifend venenatis, magna risus rhoncus ipsum, dapibus ornare nisi risus ac lorem. Etiam feugiat felis eu nulla pretium pellentesque. Curabitur id lorem ut orci blandit commodo. Vestibulum tempor ultricies nibh, eu malesuada nibh commodo non. Morbi malesuada porta fringilla. Mauris suscipit vestibulum ante ut laoreet. Duis eget mollis tortor. In imperdiet tempus mauris eu hendrerit. Vivamus ultrices rutrum magna sit amet dapibus. Phasellus sem justo, pulvinar vitae adipiscing ut, dictum in tellus.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur molestie pharetra lacus, a tincidunt elit fermentum ac. Praesent ac mauris nisl. Cras aliquet imperdiet nunc, vestibulum faucibus urna laoreet eu. Aliquam pharetra leo ut mauris tempus dignissim. Aenean mollis dui sed orci hendrerit vitae hendrerit nisi convallis. Ut id libero a metus ullamcorper consectetur. Suspendisse sed risus erat. In pharetra velit condimentum nisl interdum sed iaculis mi consectetur. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas vulputate consectetur urna, a dignissim odio vestibulum a.
-Aliquam pharetra, nunc a tempor sodales, orci sem pretium orci, quis pretium tellus purus ac nunc. Morbi dignissim urna eget sapien laoreet volutpat. Sed lacus lorem, vulputate eu aliquet non, egestas vel augue. Fusce gravida arcu at elit pharetra luctus. Curabitur pretium mi vitae purus posuere lobortis. Fusce pulvinar, mi at eleifend venenatis, magna risus rhoncus ipsum, dapibus ornare nisi risus ac lorem. Etiam feugiat felis eu nulla pretium pellentesque. Curabitur id lorem ut orci blandit commodo. Vestibulum tempor ultricies nibh, eu malesuada nibh commodo non. Morbi malesuada porta fringilla. Mauris suscipit vestibulum ante ut laoreet. Duis eget mollis tortor. In imperdiet tempus mauris eu hendrerit
-						</dd>
+						<?php if (isset($editCI) && $editCI=='true' && !isset($user_id_page)) echo " <dd>
+																			<textarea type='text' name='quote' rows='6' cols='1200'>" . $_SESSION['user_profile']['quote'] . "</textarea>
+																		   </dd>
+																		   ";
+							  else echo "
+						<dd>" . $_SESSION['user_profile']['quote'] . "</dd>";
+						?>
 					</dl>
+					
+					<?php if (isset($editCI) && !isset($user_id_page)) echo "</form>"; ?>
 				</div>
 			</div>
 	  </div>
@@ -211,24 +558,31 @@ Aliquam pharetra, nunc a tempor sodales, orci sem pretium orci, quis pretium tel
 			<div id = "online-friends" class="scrollable" style="height:80%; width:90%;">
 				<ul class="nav nav-list" id="left-menu"  >
 					<li class="nav-header">Online Friends</li>
-					<li><a href="#">Rahul Singhal</a></li>
-					<li><a href="#">Aditya Raj</a></li>
-					<li><a href="#">Nishit Bhandari</a></li>
-					<li><a href="#">Nishit Bhandari</a></li>
-					<li><a href="#">User1</a></li>
-					<li><a href="#">User2</a></li>
-					<li><a href="#">User3</a></li>
-					<li><a href="#">User4</a></li>
-					<li><a href="#">User5</a></li>
-					<li><a href="#">User6</a></li>
-					<li><a href="#">User7</a></li>
-					<li><a href="#">User8</a></li>
-					<li><a href="#">User9</a></li>
+					<?php 
+					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";			
+					if($query_out1 = mysql_query($friends)){
+							while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){
+								$online = "select first_name,last_name from Profile,User where Profile.user_id = User.user_id and User.user_id = \"".$_SESSION['friends']['id']."\" and User.online = 1;";
+								$query_out3 = mysql_query($online);
+								$_SESSION['online'] = mysql_fetch_assoc($query_out3);
+		
+			  		echo "<li><a href=\"#\">".$_SESSION['online']['first_name']." ".$_SESSION['online']['last_name']."</a></li>";
+					}}?>
 				</ul>
 			</div>
 			<input style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
 	  </div>
 
   </div>
+  
+    <script>
+        $(document).ready(function() {
+    		$('.datepicker').datepicker();
+		  });
+		  
+		$('input[id=lefile]').change(function() {
+		$('#photoCover').val($(this).val());
+		});
+      </script>
   </body>
 </html>

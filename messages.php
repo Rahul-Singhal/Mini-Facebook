@@ -1,3 +1,12 @@
+<?php
+	session_start();
+	if(!isset($_SESSION['userId'])){
+		header('Location: index.php');
+	}
+	require "connect.inc.php";
+	require "getNotificationsAndRequests.php";
+?>
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -47,6 +56,21 @@
 		padding-left:5px;
 	  margin-left: 82%;
 	  *margin-left: 81.5%;
+	}
+	.message {
+	   overflow:hidden;
+	   width:498px;
+	   margin-bottom:5px;
+	   border:1px solid #999;
+	}
+	.messagehead {
+	   overflow:hidden;
+	   background:#FFC;
+	   width:500px;
+	}
+	.messagecontent {
+	   overflow:hidden;
+	   width:496px;
 	}
 	.navbar-inner, .brand
 	{
@@ -129,15 +153,15 @@
 				<div >
 					<div class="navbar">
 					<div class="navbar-inner">
-						<a class="brand offset1" href="#">Mini-Facebook</a>
+						<a class="brand offset1" href="feed.php">Mini-Facebook</a>
 					<ul class="nav">
 					  <li>
 					       <form class="navbar-search pull-left">
 						    	<input type="text" class="search-query" placeholder="Search">
 						    </form>
 					  </li>
-					  <li><a href="#" style="color:white;">Home</a></li>
-					  <li class="active"><a href="profile.html">Profile</a></li>
+					  <li><a href="feed.php" style="color:white;">Home</a></li>
+					  <li><a style="color:white;" href="profile.php">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
 						   data-toggle="dropdown"
@@ -146,10 +170,18 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						  <li><a href="#">Link1</a></li>
-						  <li><a href="#">Link2</a></li>
-						  <li><a href="#">Link3</a></li>
-						  <li><a href="#">Link4</a></li>
+						  <?php
+						  	$count = 0;
+							  foreach($_SESSION['notifications'] as $noti){
+							  	if($count > 6) break;
+							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$noti[1]."\" ");
+								$row1 = mysql_fetch_array($result1);
+							  	if($noti[0]==='post')echo "<li><a href=\"#\">New post by ".$row1['first_name']." ".$row1['last_name']."<br/>".$noti[2]."</a></li>";
+							  	else if($noti[0]==='comment')echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." commented on a post.<br/>".$noti[2]."</a></li>";
+							  	else echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." created an event.<br/>".$noti[2]."</a></li>";
+							  	$count++;
+							  }
+						  ?>
 						</ul>
 					  </li>
 					  
@@ -161,15 +193,18 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						  <li><a href="#">FR1</a></li>
-						  <li><a href="#">FR2</a></li>
-						  <li><a href="#">FR3</a></li>
-						  <li><a href="#">FR4</a></li>
+						  <?php
+							  foreach($_SESSION['requests'] as $req){
+							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$req[0]."\" ");
+								$row1 = mysql_fetch_array($result1);
+							  	echo "<li><a href=\"profile.php?user_id=".$req[0]."\">".$row1['first_name']." ".$row1['last_name']." sent you a request.<br/>".$req[1]."</a></li>";
+							  }
+						  ?>
 						</ul>
 					  </li>
 					  
-					  <li><a href="#" style="color:white;">Messages</a></li>
-					  <li><a href="#" style="color:white;">Settings</a></li>
+					  <li class="active"><a href="#" style="color:white;">Messages</a></li>
+					  <li><a href="logout.php" style="color:white;">Logout</a></li>
 					</ul>
 					</div>
 					</div>
@@ -179,50 +214,82 @@
 			<div class="row-fluid" id="panelGuest" >
 				<div class="span4 scrollable" style="height:600px;" id="messageUsers">
 					<ul style="list-style-type:none;">
-						<li><blockquote><p>Rahul Singhal</p><small>Last received message goes here...</small></blockquote></li>
+						<?php 
+						$data = array();
+						//$userid = $_SESSION['userId'];
+						//$results = mysql_query("SELECT `user_id1` FROM  `friends_with` WHERE `user_id2` = \"".$_SESSION['userId']."\" UNION SELECT `user_id2` AS 'user_id1' FROM `friends_with` WHERE `user_id1` =  \"".$_SESSION['userId']."\" ");
+						$results = mysql_query("SELECT distinct id from ((select date_time,receiver_id as id,data from `Message` where sender_id = \"".$_SESSION['userId']."\") UNION (select date_time,sender_id as id,data from `Message` where receiver_id = \"".$_SESSION['userId']."\") order by date_time DESC ) AS `table`");
+						// echo "SELECT distinct id from ((select date_time,receiver_id as id,data from `Message` where sender_id = \"".$_SESSION['userId']."\") UNION (select date_time,sender_id as id,data from `Message` where receiver_id = \"".$_SESSION['userId']."\") order by date_time DESC ) AS `table`";
+						// exit;
+						while($row = mysql_fetch_array($results)) {
+							$data[]=$row['id'];
+							$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$row['id']."\" ");
+							$row1 = mysql_fetch_array($result1);
+						?>
+						<a href = "messages.php?receiver=<?php echo $row['id'] ?>" >
+						<li><blockquote><p><?php echo $row1['first_name'] . " " . $row1['last_name'] ?></p></blockquote></li>
 						<hr/>
-						<li><blockquote><p>Mayank Deghal</p><small>Last received message goes here...</small></blockquote></li>
+						</a>
+						<?php 
+						}
+						?>
 						<hr/>
-						<li><blockquote><p>Nishit bhandari bhandari</p><small>Last received message goes here...</small></blockquote></li>
 						<hr/>
-						<li><blockquote><p>Aditya Raj</p><small>Last received message goes here...</small></blockquote></li>
-						<hr/>
-						<li><blockquote><p>Rahul Singhal</p><small>Last received message goes here...</small></blockquote></li>
-						<hr/>
-						<li><blockquote><p>Rahul Singhal</p><small>Last received message goes here...</small></blockquote></li>
-						<hr/>
-						<li><blockquote><p>Rahul Singhal</p><small>Last received message goes here...</small></blockquote></li>
-						<hr/>
+						<?php
+						$results = mysql_query("SELECT `user_id1` AS `id` from `Friends_with` where `user_id2` = \"".$_SESSION['userId']."\" UNION SELECT `user_id2` AS `id`from `Friends_with` where `user_id1` = \"".$_SESSION['userId']."\" ");
+						while($row = mysql_fetch_array($results)) {
+							if(!in_array($row['id'], $data)){
+							$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$row['id']."\" ");
+							$row1 = mysql_fetch_array($result1);
+							?>
+							<a href = "messages.php?receiver=<?php echo $row['id'] ?>" >
+							<li><blockquote><p><?php echo $row1['first_name'] . " " . $row1['last_name'] ?></p></blockquote></li>
+							<hr/>
+							</a>
+							<?php 
+							}
+						}
+						?>
 					</ul>
 				</div>		
+				<?php 
+					//$userid = $_SESSION['userId'];
+					//$results = mysql_query("SELECT `user_id1` FROM  `friends_with` WHERE `user_id2` = \"".$_SESSION['userId']."\" UNION SELECT `user_id2` AS 'user_id1' FROM `friends_with` WHERE `user_id1` =  \"".$_SESSION['userId']."\" ");
+					$other_id = $_GET["receiver"];
+					if($other_id==='empty'){
+						$results = mysql_query("SELECT distinct id from ((select date_time,receiver_id as id,data from `Message` where sender_id = \"".$_SESSION['userId']."\") UNION (select date_time,sender_id as id,data from `Message` where receiver_id = \"".$_SESSION['userId']."\") order by date_time DESC ) AS `table`");
+						$row = mysql_fetch_array($results);
+						$other_id = $row['id'];
+					}
+					$results = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$other_id."\" ");
+					$row = mysql_fetch_array($results);
+				?>
 				<div class="span7" style="">
-					<h4 class="text-info text-center">Selected user name</h4>
+					<h4 class="text-info text-center"><?php echo $row['first_name'] . " " . $row['last_name'] ?></h4>
 					<div style="height:400px; border-left:2px solid rgb(238,238,238); border-right:2px solid rgb(238,238,238);" class="scrollable"  id = "messageArea">
-
 						<ul style="list-style-type:none; width:90%;" class="populate-messages">
-							<li><div class="sendersMessage">sender's message goes here...</div></li>
-							<li><div class="receiversMessage">Receiver's message goes here...<br/> yo man ssup?</div></li>
-							<li><div class="sendersMessage">sender's message goes here...</div></li>
-							<li><div class="receiversMessage">Hey man!! <br/> I am good and sound!! you say how is your database project going? I heard you guys are building a prototype of facebook.. nice project huh!!...</div></li>
-							<li><div class="sendersMessage">sender's message goes here...</div></li>
-							<li><div class="receiversMessage">Receiver's message goes here...<br/> yo man ssup?</div></li>
-							<li><div class="sendersMessage">sender's message goes here...</div></li>
-							<li><div class="receiversMessage">Hey man!! <br/> I am good and sound!! you say how is your database project going? I heard you guys are building a prototype of facebook.. nice project huh!!...</div></li>
-							<li><div class="sendersMessage">sender's message goes here...</div></li>
-							<li><div class="receiversMessage">Receiver's message goes here...<br/> yo man ssup?</div></li>
-							<li><div class="sendersMessage">sender's message goes here...</div></li>
-							<li><div class="receiversMessage">Hey man!! <br/> I am good and sound!! you say how is your database project going? I heard you guys are building a prototype of facebook.. nice project huh!!...</div></li>
-							<li><div class="sendersMessage">sender's message goes here...</div></li>
-							<li><div class="receiversMessage">Receiver's message goes here...<br/> yo man ssup?</div></li>
-							<li><div class="sendersMessage">sender's message goes here...</div></li>
-							<li><div class="receiversMessage">Hey man!! <br/> I am good and sound!! you say how is your database project going? I heard you guys are building a prototype of facebook.. nice project huh!!...</div></li>
-							<li><div class="sendersMessage">test<br/>test<br/>test<br/>test<br/>test<br/>test<br/>test<br/>test<br/>test<br/>test<br/>test<br/>test<br/></div></li>
+							<?php
+							$results = mysql_query("select * from `Message` where `sender_id` = \"".$_SESSION['userId']."\" AND `receiver_id` = \"".$other_id."\" OR  `sender_id` = \"".$other_id."\" AND `receiver_id` = \"".$_SESSION['userId']."\" order by date_time ASC");
 							
+							while($row = mysql_fetch_array($results)) {
+								if($row['sender_id'] === $other_id){
+								?>
+								<li><div class="receiversMessage"><?php echo date('F j,Y,g:i a',strtotime($row['date_time'])); ?><br/><?php echo $row['data'] ?></div></li>
+								<?php 
+								}
+								else{
+								?>
+								<li><div class="sendersMessage"><?php echo date('F j,Y,g:i a',strtotime($row['date_time'])); ?><br/><?php echo $row['data'] ?></div></li>
+								<?php
+								}
+							}
+							?>
 						</ul>
 
 					</div>
 					<div class="text-center">
-						<textarea rows="4" style="width:90%; margin-top:20px;"></textarea>
+						<textarea id="message" rows="4" style="width:90%; margin-top:20px;"></textarea>
+						<input type="button" value="Send" onClick="send();"/>
 					</div>
 				</div>			
 			</div>
@@ -236,24 +303,21 @@
 				<li id="ticker-item"><a href="#">Nishit Bhandari poked you.</a></li><div id="line"></div>
 			</ul>
 			</div>
-			<hr>
+			<hr/>
 			<div id="online" style="height:60%;">
 			<div id = "online-friends" class="scrollable" style="height:80%; width:90%;">
 				<ul class="nav nav-list" id="left-menu"  >
 					<li class="nav-header">Online Friends</li>
-					<li><a href="#">Rahul Singhal</a></li>
-					<li><a href="#">Aditya Raj</a></li>
-					<li><a href="#">Nishit Bhandari</a></li>
-					<li><a href="#">Nishit Bhandari</a></li>
-					<li><a href="#">User1</a></li>
-					<li><a href="#">User2</a></li>
-					<li><a href="#">User3</a></li>
-					<li><a href="#">User4</a></li>
-					<li><a href="#">User5</a></li>
-					<li><a href="#">User6</a></li>
-					<li><a href="#">User7</a></li>
-					<li><a href="#">User8</a></li>
-					<li><a href="#">User9</a></li>
+					<?php 
+					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";			
+					if($query_out1 = mysql_query($friends)){
+							while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){
+								$online = "select first_name,last_name from Profile,User where Profile.user_id = User.user_id and User.user_id = \"".$_SESSION['friends']['id']."\" and User.online = 1;";
+								$query_out3 = mysql_query($online);
+								$_SESSION['online'] = mysql_fetch_assoc($query_out3);
+		
+			  		echo "<li><a href=\"#\">".$_SESSION['online']['first_name']." ".$_SESSION['online']['last_name']."</a></li>";
+					}}?>
 				</ul>
 			</div>
 			<input style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
@@ -261,6 +325,24 @@
 
   </div>
 
+<script type="text/javascript">
+function send(){
+console.log("fartmax");
+   //Send an XMLHttpRequest to the 'send.php' file with all the required informations
+   var receiver = "<?php echo $other_id ; ?>";
+   var sendto = 'send.php?message=' + document.getElementById('message').value + '&name=' + receiver;
+   if(window.XMLHttpRequest){
+      xmlhttp = new XMLHttpRequest();
+      xmlhttp.open("GET",sendto,false);
+      xmlhttp.send();
+   }
+   else{
+      xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+      xmlhttp.open("GET",sendto,false);
+      xmlhttp.send();
+   }}
+</script>
+  
    
   </body>
 </html>

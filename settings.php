@@ -1,3 +1,11 @@
+<?php
+	session_start();
+	if(!isset($_SESSION['userId'])){
+		header('Location: index.php');
+	}
+	require "getNotificationsAndRequests.php";
+?>
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -138,7 +146,7 @@
 						    	<input type="text" class="search-query" placeholder="Search">
 						    </form>
 					  </li>
-					  <li><a href="#" style="color:white;">Home</a></li>
+					  <li><a href="feed.php" style="color:white;">Home</a></li>
 					  <li><a href="profile.php" style="color:white;">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
@@ -148,10 +156,16 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						  <li><a href="#">Link1</a></li>
-						  <li><a href="#">Link2</a></li>
-						  <li><a href="#">Link3</a></li>
-						  <li><a href="#">Link4</a></li>
+							<?php
+							$count = 0;
+							  foreach($_SESSION['notifications'] as $noti){
+								if($count > 6) break;
+								if($noti[0]==='post')echo "<li><a href=\"#\">New post by ".$noti[1]."<br/>".$noti[2]."</a></li>";
+								else if($noti[0]==='comment')echo "<li><a href=\"#\">".$noti[1]." commented on a post.<br/>".$noti[2]."</a></li>";
+								else echo "<li><a href=\"#\">".$noti[1]." created an event.<br/>".$noti[2]."</a></li>";
+								$count++;
+							  }
+							?>
 						</ul>
 					  </li>
 					  
@@ -163,15 +177,16 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						  <li><a href="#">FR1</a></li>
-						  <li><a href="#">FR2</a></li>
-						  <li><a href="#">FR3</a></li>
-						  <li><a href="#">FR4</a></li>
+							<?php
+							  foreach($_SESSION['requests'] as $req){
+							  	echo "<li><a href=\"#\">".$req[0]." sent you a request.<br/>".$req[1]."</a></li>";
+							  }
+							?>
 						</ul>
 					  </li>
 					  
-					  <li><a href="messages.html" style="color:white;">Messages</a></li>
-					  <li class="active"><a href="#">Settings</a></li>
+					  <li><a href="messages.php?receiver=empty" style="color:white;">Messages</a></li>
+					  <li class="active"><a href="settings.php">Settings</a></li>
 					</ul>
 					</div>
 					</div>
