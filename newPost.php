@@ -14,7 +14,7 @@
 				$query = "INSERT INTO `Post` (`likes`, `data`) VALUES (0,'$postData')";
 			    if(mysql_query($query)){
 			      //get the post id
-			    	$query = "SELECT `post_id` FROM `Post` WHERE `likes`=0 AND `data`='$postData'";
+			    	$query = "SELECT MAX(`post_id`) AS `post_id` FROM `Post` WHERE `likes`=0 AND `data`='$postData'";
 			    	if($query_out = mysql_query($query)){
       					if($row = mysql_fetch_assoc($query_out)){
       						$postID = $row['post_id'];
