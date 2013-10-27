@@ -9,8 +9,14 @@
 	require "connect.inc.php";
 	$username = "select first_name,last_name from Profile where user_id = \"".$_SESSION['userId']."\";";
 	$_SESSION['username'] = mysql_fetch_assoc(mysql_query($username));
-	$query = "SELECT post_id,date_time,likes,data FROM `Post`,`Posts` WHERE `post_id` = `posts_post_id` and user_id= \"".$_SESSION['userId']."\" 
-			UNION SELECT Post.post_id,date_time,likes,data FROM `Post`,`Post_notification` where `Post`.`post_id` = `Post_notification`.`post_id` AND receiver_id= \"".$_SESSION['userId']."\" ORDER BY date_time desc;";
+	$query = "select * from (select post_id,max(date_time) as date_time from (SELECT post_id,date_time FROM `Post`,`Posts` WHERE Post.post_id not in
+			(select post_id from Comment) and `post_id` = `posts_post_id` and user_id= \"".$_SESSION['userId']."\" 
+			UNION SELECT Post.post_id,date_time FROM `Post`,`Post_notification` where Post.post_id not in
+			(select post_id from Comment) and `Post`.`post_id` = `Post_notification`.`post_id` AND receiver_id= \"".$_SESSION['userId']."\" UNION	
+			select post_id,date_time from Comment where post_id in 
+			(SELECT post_id FROM `Post`,`Posts` WHERE `post_id` = `posts_post_id` and user_id= \"".$_SESSION['userId']."\" 
+			UNION SELECT Post.post_id FROM `Post`,`Post_notification` where 
+			`Post`.`post_id` = `Post_notification`.`post_id` AND receiver_id= \"".$_SESSION['userId']."\" ))t1 group by t1.post_id)t2 order by t2.date_time desc ;";
 	
 ?>
 
@@ -214,7 +220,10 @@
 					</div>
 					
 					<?php if($query_out1 = mysql_query($query)){
-							while($_SESSION['post_info'] = mysql_fetch_assoc($query_out1)){	
+							while($_SESSION['post'] = mysql_fetch_assoc($query_out1)){	
+								$post_info = "select post_id,date_time,likes,data from Post where post_id = \"".$_SESSION['post']['post_id']."\";";
+								$query_out4 = mysql_query($post_info);
+								$_SESSION['post_info'] = mysql_fetch_assoc($query_out4);
 								$post_sender = "SELECT first_name,last_name,image from Profile,Posts where Profile.user_id = Posts.user_id and posts_post_id = \"".$_SESSION['post_info']['post_id']."\";";
 								$query_out2 = mysql_query($post_sender);
 								$_SESSION['post_sender'] = mysql_fetch_assoc($query_out2);
@@ -248,7 +257,7 @@
 										</span>
 									</div>
 									<ul class=\"comments\">";
-									$comment_query = "Select * FROM Comment WHERE Comment.post_id = \"".$_SESSION['post_info']['post_id']."\" ORDER BY date_time desc;";
+									$comment_query = "Select * FROM Comment WHERE Comment.post_id = \"".$_SESSION['post_info']['post_id']."\" ORDER BY date_time ASC;";
 										$index = 1;
 										if($query_out = mysql_query($comment_query)){
 												while($_SESSION['comment_info'] = mysql_fetch_assoc($query_out)){
