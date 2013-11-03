@@ -85,6 +85,12 @@
 		width:100%
 	}
 
+	.Mtime{
+		color: #673030;
+		font-weight: bold;
+		font-size: 10px;
+	}
+
 	.sendersMessage{
 		border-left:5px solid rgb(238,238,238);
 		padding-top:5px;
@@ -108,11 +114,19 @@
 	.slimScrollDiv2{
 
 	}
+	#results{
+		list-style-type: none;
+		font-weight:bold;
+		font-size:16px;
+		padding-top:5px;
+		padding-bottom:5px;
+	}
 
 	</style>
 	<script src="js/jquery.js" type="text/javascript"></script>
    	<script src="js/bootstrap.min.js" type="text/javascript"></script>
    	<script src="js/jquery.slimscroll.js" type="text/javascript"></script>
+   	<script type="text/javascript" src="js/liveSearch.js"></script>
    	
 
 	<script>
@@ -157,7 +171,8 @@
 					<ul class="nav">
 					  <li>
 					       <form class="navbar-search pull-left">
-						    	<input type="text" class="search-query" placeholder="Search">
+						    	<input type="text" class="search-query" id="searchFriend" placeholder="Search">
+						    	<ul id="results"></ul>
 						    </form>
 					  </li>
 					  <li><a href="feed.php" style="color:white;">Home</a></li>
@@ -274,12 +289,12 @@
 							while($row = mysql_fetch_array($results)) {
 								if($row['sender_id'] === $other_id){
 								?>
-								<li><div class="receiversMessage"><?php echo date('F j,Y,g:i a',strtotime($row['date_time'])); ?><br/><?php echo $row['data'] ?></div></li>
+								<li><div class="receiversMessage"><span class="Mtime"><?php echo date('F j,Y,g:i a',strtotime($row['date_time'])); ?></span><br/><?php echo $row['data'] ?></div></li>
 								<?php 
 								}
 								else{
 								?>
-								<li><div class="sendersMessage"><?php echo date('F j,Y,g:i a',strtotime($row['date_time'])); ?><br/><?php echo $row['data'] ?></div></li>
+								<li><div class="sendersMessage"><span class="Mtime"><?php echo date('F j,Y,g:i a',strtotime($row['date_time'])); ?></span><br/><?php echo $row['data'] ?></div></li>
 								<?php
 								}
 							}
@@ -297,10 +312,42 @@
 		<div class="span2" id="right-bar" style="position:fixed; height:100%;">
 			<div id="ticker" style="height:40%;">
 			<ul class="nav nav-list" id="left-menu" >
-				<li class="nav-header">Activities</li>
-				<li id="ticker-item"><a href="#">Rahul Singhal is now friends with Aditya Raj</a></li><div id="line"></div>
-				<li id="ticker-item"><a href="#">Aditya Raj likes your status "yo"</a></li><div id="line"></div>
-				<li id="ticker-item"><a href="#">Nishit Bhandari poked you.</a></li><div id="line"></div>
+				<li class="nav-header">Links</li>
+				<li>
+				<a href="http://asc.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-info" style="padding-right:71px; padding-left:71px;"> 
+							<h4> ASC </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://gpo.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-important" style="padding-right:70px; padding-left:70px;"> 
+							<h4> GPO </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://moodle.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-warning" style="padding-right:58px; padding-left:58px;"> 
+							<h4> Moodle </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://www.cse.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-success" style="padding-right:72px; padding-left:71px;"> 
+							<h4> CSE </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://www.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-inverse" style="padding-right:73px; padding-left:73px;"> 
+							<h4> IITB </h4> 
+						</span> 
+				</a>
+				</li>
 			</ul>
 			</div>
 			<hr/>
@@ -313,10 +360,11 @@
 					if($query_out1 = mysql_query($friends)){
 							while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){
 								$online = "select first_name,last_name from Profile,User where Profile.user_id = User.user_id and User.user_id = \"".$_SESSION['friends']['id']."\" and User.online = 1;";
-								$query_out3 = mysql_query($online);
-								$_SESSION['online'] = mysql_fetch_assoc($query_out3);
-		
-			  		echo "<li><a href=\"#\">".$_SESSION['online']['first_name']." ".$_SESSION['online']['last_name']."</a></li>";
+								if($query_out3 = mysql_query($online)){
+									if($_SESSION['online'] = mysql_fetch_assoc($query_out3)){
+									echo "<li><a href=\"#\">".$_SESSION['online']['first_name']." ".$_SESSION['online']['last_name']."</a></li>";
+									}
+								}
 					}}?>
 				</ul>
 			</div>
@@ -326,9 +374,10 @@
   </div>
 
 <script type="text/javascript">
+
 function send(){
-console.log("fartmax");
    //Send an XMLHttpRequest to the 'send.php' file with all the required informations
+   console.log("yp there");
    var receiver = "<?php echo $other_id ; ?>";
    var sendto = 'send.php?message=' + document.getElementById('message').value + '&name=' + receiver;
    if(window.XMLHttpRequest){

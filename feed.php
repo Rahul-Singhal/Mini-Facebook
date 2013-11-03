@@ -7,6 +7,7 @@
 	require "getNotificationsAndRequests.php";
 
 	require "connect.inc.php";
+
 	$username = "select first_name,last_name from Profile where user_id = \"".$_SESSION['userId']."\";";
 	$_SESSION['username'] = mysql_fetch_assoc(mysql_query($username));
 	$query = "select * from (select post_id,max(date_time) as date_time from (SELECT post_id,date_time FROM `Post`,`Posts` WHERE Post.post_id not in
@@ -17,6 +18,8 @@
 			(SELECT post_id FROM `Post`,`Posts` WHERE `post_id` = `posts_post_id` and user_id= \"".$_SESSION['userId']."\" 
 			UNION SELECT Post.post_id FROM `Post`,`Post_notification` where 
 			`Post`.`post_id` = `Post_notification`.`post_id` AND receiver_id= \"".$_SESSION['userId']."\" ))t1 group by t1.post_id)t2 order by t2.date_time desc ;";
+
+	
 	
 ?>
 
@@ -103,12 +106,20 @@
 		padding-right:10px;
 		padding-top:20px;
 	}
+	#results{
+		list-style-type: none;
+		font-weight:bold;
+		font-size:16px;
+		padding-top:5px;
+		padding-bottom:5px;
+	}
 	
 	</style>
 
 	<script src="js/jquery.js" type="text/javascript"></script>
    	<script src="js/bootstrap.min.js" type="text/javascript"></script>
    	<script src="js/jquery.slimscroll.js" type="text/javascript"></script>
+   	<script type="text/javascript" src="js/liveSearch.js"></script>
 
    	<script>
 		function onLoadFunction(){
@@ -135,7 +146,8 @@
 					<ul class="nav">
 					  <li>
 					       <form class="navbar-search pull-left">
-						    	<input type="text" class="search-query" placeholder="Search">
+						    	<input type="text" class="search-query" id="searchFriend" placeholder="Search">
+						    	<ul id="results"></ul>
 						    </form>
 					  </li>
 					  <li class="active"><a href="#" style="color:white;">Home</a></li>
@@ -202,8 +214,7 @@
 						<li><a href="messages.php?receiver=empty">Messages</a></li>
 						
 						<li class="nav-header">Events</li>
-						<li><a href="#">Upcoming</a></li>
-						<li><a href="#">Recent</a></li>
+						<li><a href="event.php">Your Events</a></li>
 						
 						<li class="nav-header">Friends & Followers</li>
 						<li><a href="friendList.php">Friend List</a></li>
@@ -214,7 +225,7 @@
 				<div class="span7 offset1">
 					<div>
 					<form method="post" action="newPost.php">
-					<textarea name="new_post" rows="6" style="width:100%;" placeholder="Share your thoughts!!"></textarea>
+					<textarea name="new_post" rows="6" style="width:100%;" <?php echo "placeholder=\"Hey! ".$_SESSION['username']['first_name']." ".$_SESSION['username']['last_name']."... Share your thoughts!!\"";?> ></textarea>
 					<button class="btn btn-inverse" type="submit"style="margin-bottom:30px; width:125px;">Post!</button>
 					</form>
 					</div>
@@ -296,10 +307,42 @@
 		<div class="span2" id="right-bar" style="position:fixed; height:100%;">
 			<div id="ticker" style="height:40%;">
 			<ul class="nav nav-list" id="left-menu" >
-				<li class="nav-header">Activities</li>
-				<li id="ticker-item"><a href="#">Rahul Singhal is now friends with Aditya Raj</a></li><div id="line"></div>
-				<li id="ticker-item"><a href="#">Aditya Raj likes your status "yo"</a></li><div id="line"></div>
-				<li id="ticker-item"><a href="#">Nishit Bhandari poked you.</a></li><div id="line"></div>
+				<li class="nav-header">Links</li>
+				<li>
+				<a href="http://asc.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-info" style="padding-right:71px; padding-left:71px;"> 
+							<h4> ASC </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://gpo.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-important" style="padding-right:70px; padding-left:70px;"> 
+							<h4> GPO </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://moodle.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-warning" style="padding-right:58px; padding-left:58px;"> 
+							<h4> Moodle </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://www.cse.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-success" style="padding-right:72px; padding-left:71px;"> 
+							<h4> CSE </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://www.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-inverse" style="padding-right:73px; padding-left:73px;"> 
+							<h4> IITB </h4> 
+						</span> 
+				</a>
+				</li>
 			</ul>
 			</div>
 			<hr>
@@ -308,18 +351,21 @@
 				<ul class="nav nav-list" id="left-menu"  >
 					<li class="nav-header">Online Friends</li>
 					<?php 
-					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";			
+					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+					$count = 0;
 					if($query_out1 = mysql_query($friends)){
-							while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){
-								$online = "select first_name,last_name from Profile,User where Profile.user_id = User.user_id and User.user_id = \"".$_SESSION['friends']['id']."\" and User.online = 1;";
-								$query_out3 = mysql_query($online);
-								$_SESSION['online'] = mysql_fetch_assoc($query_out3);
-		
-			  		echo "<li><a href=\"#\">".$_SESSION['online']['first_name']." ".$_SESSION['online']['last_name']."</a></li>";
+						while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){
+							$online = "select first_name,last_name from Profile,User where Profile.user_id = User.user_id and User.user_id = \"".$_SESSION['friends']['id']."\" and User.online = 1;";
+							if($query_out3 = mysql_query($online)){
+								if($_SESSION['online'] = mysql_fetch_assoc($query_out3)){
+								echo "<li><a id=\"of$count\" href=\"#\">".$_SESSION['online']['first_name']." ".$_SESSION['online']['last_name']."</a></li>";
+								$count += 1;
+								}
+							}
 					}}?>
 				</ul>
 			</div>
-			<input style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
+			<input id="onlineSearch" style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
 	  </div>
 
   </div>

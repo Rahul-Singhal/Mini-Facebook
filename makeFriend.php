@@ -11,10 +11,9 @@
 	
 	if ($adddel == 'add'){
 	$queryIn = "INSERT INTO `Request` (`receiver_id`,`sender_id`,seen) VALUES ('$friend_add','" . $_SESSION['userId'] . "',0);";
-	// echo $queryIn;
-	// exit();
+	//echo $queryIn;
 	$query_out = mysql_query($queryIn);
-	
+	//exit();
 	}
 	else if ($adddel == 'del'){
 	$query1 = "DELETE FROM `Friends_with` WHERE `user_id1`='$friend_add' AND `user_id2`= '" . $_SESSION['userId'] . "';";
@@ -33,6 +32,12 @@
 		//echo $queryCh;
 		//exit();
 		$query_out = mysql_query($queryCh);
+	}
+	
+	else if ($adddel == 'cancelReq'){
+		$queryDel = "DELETE FROM `Request` WHERE `sender_id` = '" . $_SESSION['userId'] . "' AND `receiver_id`='$friend_add';";
+		//echo $queryDel;
+		$query_out = mysql_query($queryDel);
 	}
 	
 	if ($redirect == "profile.php") header("Location: $redirect?user_id=$friend_add");

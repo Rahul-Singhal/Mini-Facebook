@@ -9,7 +9,14 @@
       $_SESSION['user_profile'] = mysql_fetch_assoc($query_out);
     }
 	//echo $_POST['dob'];
-	if (isset($_POST['age'])) $age = mysql_real_escape_string($_POST['age']);
+	//if (isset($_POST['age'])) $age = $_POST['age'];   mm/dd/yy   yy/mm/dd
+	// 0 - 1,  1 - 2, 2 - 0
+	
+	$birthDate = explode("-", $_POST['dob']);
+    //get age from date or birthdate
+    $age = (date("md", date("U", mktime(0, 0, 0, $birthDate[1], $birthDate[2], $birthDate[0]))) > date("md") ? ((date("Y")-$birthDate[0])-1):(date("Y")-$birthDate[0]));
+    echo "Age is:".$age;
+	
 	if (isset($_POST['dob'])) $dob = mysql_real_escape_string($_POST['dob']);
 	if (isset($_POST['relationStat'])) $relationStat = mysql_real_escape_string($_POST['relationStat']);
 	if (isset($_POST['sex'])) $sex = mysql_real_escape_string($_POST['sex']);
@@ -29,7 +36,7 @@
 	if (isset($_POST['high_school'])) $high_school = mysql_real_escape_string($_POST['high_school']);
 	if (isset($_POST['prim_school'])) $prim_school = mysql_real_escape_string($_POST['prim_school']);
 	
-	if (isset($_POST['image'])) $image = mysql_real_escape_string($_POST['image']);
+	if (isset($_POST['image'])) $image = $_POST['image'];
 	
 	//if (isset($_POST[''])) $ = $_POST[''];
 	
@@ -37,7 +44,7 @@
 	UPDATE Profile
 	SET ";
 	
-	if (isset($age)) { $query = $query . "age='" . $age . "',";}
+	if (isset($dob)) { $query = $query . "age='" . $age . "',";}
 	if (isset($dob)) { $query = $query . "dob='" . $dob . "',";}
 	if (isset($relationStat)) { $query = $query . "relationship_status='" . $relationStat . "'," ;}
 	if (isset($sex)) { $query = $query . "gender='" . $sex . "'";}
@@ -64,7 +71,6 @@
 	}
 	
 	$query = $query . " WHERE user_id='" . $_SESSION['userId'] . "';";
-	//echo $query;
 	if($query_out = mysql_query($query)){
 		echo "Updated";
 	}

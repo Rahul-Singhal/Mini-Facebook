@@ -3,7 +3,16 @@
 	if(!isset($_SESSION['userId'])){
 		header('Location: index.php');
 	}
+	
+	require "connect.inc.php";
 	require "getNotificationsAndRequests.php";
+	$event_info = "SELECT * from Event,Event_Notification where Event.event_date_time > CURRENT_TIMESTAMP AND Event.event_id = Event_Notification.event_id and (receiver_id = \"".$_SESSION['userId']."\" OR sender_id = \"".$_SESSION['userId']."\") GROUP BY `Event`.`event_id` ORDER BY Event.event_date_time;";
+	// echo "SELECT * from Event,Event_Notification where Event.event_id = Event_Notification.event_id and receiver_id = \"".$_SESSION['userId']."\";";
+	// echo $event_info;
+	// exit;
+	$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+	
+	
 ?>
 
 <!DOCTYPE html>
@@ -12,6 +21,7 @@
     <title>Mini-Facebook</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
+	<link href="css/datepicker.css" rel="stylesheet">
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
 	<style type="text/css">
 	body, html {
@@ -23,6 +33,12 @@
 		max-height: 90%;
 		overflow: auto;
 	}
+	
+	a{
+	text-decoration:none;
+	color:"white";
+	}
+	
 	#top {
 		/*background-color: #4c66a4;
 		color: #ffffff;*/
@@ -88,12 +104,21 @@
 		padding-right:10px;
 		padding-top:20px;
 	}
+	#results{
+		list-style-type: none;
+		font-weight:bold;
+		font-size:16px;
+		padding-top:5px;
+		padding-bottom:5px;
+	}
 	
 	</style>
 
 	<script src="js/jquery.js" type="text/javascript"></script>
    	<script src="js/bootstrap.min.js" type="text/javascript"></script>
-   	<script src="js/jquery.slimscroll.js" type="text/javascript"></script>
+   	<script src="js/bootstrap-datepicker.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/jquery.slimscroll.js" type="text/javascript"></script>
+	<script type="text/javascript" src="js/liveSearch.js"></script>
 
    	<script>
 		function onLoadFunction(){
@@ -106,6 +131,7 @@
 	      	 wrapperClass:'slimScrollDiv3'
 	      	});	
 		}
+					
 	</script>
   </head>
   <body onload="onLoadFunction()">
@@ -116,15 +142,16 @@
 				<div >
 					<div class="navbar">
 					<div class="navbar-inner">
-						<a class="brand offset1" href="#">Mini-Facebook</a>
+						<a class="brand offset1" href="feed.php">Mini-Facebook</a>
 					<ul class="nav">
 					  <li>
 					       <form class="navbar-search pull-left">
-						    	<input type="text" class="search-query" placeholder="Search">
+						    	<input type="text" class="search-query" id="searchFriend" placeholder="Search">
+						    	<ul id="results"></ul>
 						    </form>
 					  </li>
-					  <li><a href="#" style="color:white;">Home</a></li>
-					  <li class="active"><a href="#">Profile</a></li>
+					  <li><a href="feed.php" style="color:white;">Home</a></li>
+					  <li class="active"><a href="profile.php">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
 						   data-toggle="dropdown"
@@ -133,16 +160,18 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-						    <?php
+						  <?php
 						  	$count = 0;
 							  foreach($_SESSION['notifications'] as $noti){
 							  	if($count > 6) break;
-							  	if($noti[0]==='post')echo "<li><a href=\"#\">New post by ".$noti[1]."<br/>".$noti[2]."</a></li>";
-							  	else if($noti[0]==='comment')echo "<li><a href=\"#\">".$noti[1]." commented on a post.<br/>".$noti[2]."</a></li>";
-							  	else echo "<li><a href=\"#\">".$noti[1]." created an event.<br/>".$noti[2]."</a></li>";
+							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$noti[1]."\" ");
+								$row1 = mysql_fetch_array($result1);
+							  	if($noti[0]==='post')echo "<li><a href=\"#\">New post by ".$row1['first_name']." ".$row1['last_name']."<br/>".$noti[2]."</a></li>";
+							  	else if($noti[0]==='comment')echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." commented on a post.<br/>".$noti[2]."</a></li>";
+							  	else echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." created an event.<br/>".$noti[2]."</a></li>";
 							  	$count++;
 							  }
-							?>
+						  ?>
 						</ul>
 					  </li>
 					  
@@ -154,16 +183,18 @@
 							<b class="caret"></b>
 						  </a>
 						<ul class="dropdown-menu">
-							<?php
+						  <?php
 							  foreach($_SESSION['requests'] as $req){
-							  	echo "<li><a href=\"#\">".$req[0]." sent you a request.<br/>".$req[1]."</a></li>";
+							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$req[0]."\" ");
+								$row1 = mysql_fetch_array($result1);
+							  	echo "<li><a href=\"profile.php?user_id=".$req[0]."\">".$row1['first_name']." ".$row1['last_name']." sent you a request.<br/>".$req[1]."</a></li>";
 							  }
-							?>
+						  ?>
 						</ul>
 					  </li>
 					  
 					  <li><a href="messages.php?receiver=empty" style="color:white;">Messages</a></li>
-					  <li><a href="settings.php" style="color:white;">Settings</a></li>
+					  <li><a href="logout.php" style="color:white;">Logout</a></li>
 					</ul>
 					</div>
 					</div>
@@ -172,65 +203,88 @@
 			
 			<div class="row-fluid " id="panelGuest">
 				<div class="span3" style="border-right:4px solid #007AA3;">
-					<img src="img/me.png" width="80%" class="img-polaroid">
+					<?php
+					echo '<img src="data:image/jpeg;base64,'.base64_encode( $_SESSION['user_profile']['image'] ) . '" width="80%" class="img-polaroid"/>';
+					?>
 					<br>
 					<br>
 					<ul class="nav nav-list" id="left-menu">
 						<li class="nav-header">Favorites</li>
-						<li><a href="#">New Feed</a></li>
+						<li><a href="feed.php">New Feed</a></li>
 						<li><a href="messages.php?receiver=empty">Messages</a></li>
 						
 						<li class="nav-header">Events</li>
-						<li><a href="#">Upcoming</a></li>
-						<li><a href="#">Recent</a></li>
-						
+						<li class="active"><a href="event.php">Your Events</a></li>
+
 						<li class="nav-header">Friends & Followers</li>
 						<li><a href="friendList.php">Friend List</a></li>
-						<li><a href="followerList.php">Follower List</a></li>
+						<li ><a href="followerList.php">Follower List</a></li>
 						
 					</ul>
 				</div>		
 				<div class="span7 offset1">
+					<h3> Create an Event </h3>
+					<div>
+					<form method="post" action="newEvent.php">
+					
+					<textarea name="event-description" rows="6" style="width:55%; float:left;" placeholder="Description of the event"></textarea>
+					
+					<input type="text" name="event-name" style="float:right; width:40%;" placeholder="Event name">
+					<br>
+					<br>
+					<input type="text" name="event-date" class="datepicker" style="float:right; width:40%;" placeholder="yyyy-mm-dd" data-date-format="yyyy-mm-dd">
+					<br>
+					<br>
+					<input type="number" name="event-time-hours" style="float:left; width:18%; margin-left:5px;" placeholder="hh" min="0" max="23">
+					<input type="number" name="event-time-mins" style="float:right; width:18%;" placeholder="mm" min="0" max="59">
+					
+					<div style="clear:both"></div>
+					
+					<input type="text" name="event-house-no" style="float:left; width:47%;" placeholder="House Number">
+					<input type="text" name="event-street" style="float:right; width:47%;" placeholder="Street">
+					<br>
+					<input type="text" name="event-city" style="float:left; width:47%;" placeholder="City">
+					<input type="text" name="event-state" style="float:right; width:47%;" placeholder="State">
+					<br>
+					<input type="number" name="event-pin" style="float:left; width:47%;" placeholder="Pin Code">
+					<input type="text" name="event-country" style="float:right; width:47%;" placeholder="Country">
+					<br>
+
+					<br>
+					<button class="btn btn-inverse" type="submit"style="margin-bottom:30px; width:125px;">Create!</button>
+					</form>
+					</div>
+				
+				
 					<h3> Upcoming Events </h3>
+					<?php if($query_out = mysql_query($event_info)){
+							while($_SESSION['event_info']= mysql_fetch_assoc($query_out)){
+								$creator = "SELECT first_name,last_name from Profile,Event where Profile.user_id = Event.sender_id and sender_id = \"".$_SESSION['event_info']['sender_id']."\";";
+								$query_out3 = mysql_query($creator);
+								$_SESSION['creator'] = mysql_fetch_assoc($query_out3);
+								echo "<dl class=\"dl-horizontal\">
+								<dt>Event Name</dt>
+								<dd>".$_SESSION['event_info']['event_name']." </dd>
+								<dt>Date</dt>
+								<dd>".$_SESSION['event_info']['event_date_time']." </dd>
+								<dt> Created by </dt>
+								<dd> ".$_SESSION['creator']['first_name']." ".$_SESSION['creator']['last_name']." </dd>
+								<dt> Description </dt>
+								<dd>".$_SESSION['event_info']['description']."</dd>
+								<dt> Address </dt>
+								<dd> <address>
+									".$_SESSION['event_info']['house_no']."<br>
+									".$_SESSION['event_info']['street']."<br>
+									".$_SESSION['event_info']['city']."<br>
+									".$_SESSION['event_info']['state']."<br>
+									".$_SESSION['event_info']['country']."<br>
+									".$_SESSION['event_info']['pin']."
+								</address>
+								</dd>
+								</dl>";}}?>
 					
-					<dl class="dl-horizontal">
-					<dt> 23rd October, 1897 </dt>
-					<dd> 6:00 pm </dd>
-					<dt> Created by </dt>
-					<dd> Mayank Dehgal </dd>
-					<dt> Description </dt>
-					<dd> Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren </dd>
-					<dt> Address </dt>
-					<dd> <address>
-						C/403, <br>
-						Chandan Avenue, <br>
-						Mira Road, Thane, <br>
-						Maharashtra, <br>
-						India <br>
-						Pin-Code : 401107
-					</address>
-					</dd>
-					</dl>
 					
 					
-					<dl class="dl-horizontal">
-					<dt> 23rd October, 1896 </dt>
-					<dd> 6:00 pm </dd>
-					<dt> Created by </dt>
-					<dd> Mayank Dehgal </dd>
-					<dt> Description </dt>
-					<dd> Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren Lauren </dd>
-					<dt> Address </dt>
-					<dd> <address>
-						C/403, <br>
-						Chandan Avenue, <br>
-						Mira Road, Thane, <br>
-						Maharashtra, <br>
-						India <br>
-						Pin-Code : 401107
-					</address>
-					</dd>
-					</dl>
 					
 				</div>
 			</div>
@@ -238,10 +292,42 @@
 		<div class="span2" id="right-bar" style="position:fixed; height:100%;">
 			<div id="ticker" style="height:40%;">
 			<ul class="nav nav-list" id="left-menu" >
-				<li class="nav-header">Activities</li>
-				<li id="ticker-item"><a href="#">Rahul Singhal is now friends with Aditya Raj</a></li><div id="line"></div>
-				<li id="ticker-item"><a href="#">Aditya Raj likes your status "yo"</a></li><div id="line"></div>
-				<li id="ticker-item"><a href="#">Nishit Bhandari poked you.</a></li><div id="line"></div>
+				<li class="nav-header">Links</li>
+				<li>
+				<a href="http://asc.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-info" style="padding-right:71px; padding-left:71px;"> 
+							<h4> ASC </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://gpo.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-important" style="padding-right:70px; padding-left:70px;"> 
+							<h4> GPO </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://moodle.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-warning" style="padding-right:58px; padding-left:58px;"> 
+							<h4> Moodle </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://www.cse.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-success" style="padding-right:72px; padding-left:71px;"> 
+							<h4> CSE </h4> 
+						</span> 
+				</a>
+				</li>
+				<li>
+				<a href="http://www.iitb.ac.in" target="_blank" width="100%"> 
+						<span class="label label-inverse" style="padding-right:73px; padding-left:73px;"> 
+							<h4> IITB </h4> 
+						</span> 
+				</a>
+				</li>
 			</ul>
 			</div>
 			<hr>
@@ -249,26 +335,32 @@
 			<div id = "online-friends" class="scrollable" style="height:80%; width:90%;">
 				<ul class="nav nav-list" id="left-menu"  >
 					<li class="nav-header">Online Friends</li>
-					<li><a href="#">Rahul Singhal</a></li>
-					<li><a href="#">Aditya Raj</a></li>
-					<li><a href="#">Nishit Bhandari</a></li>
-					<li><a href="#">Nishit Bhandari</a></li>
-					<li><a href="#">User1</a></li>
-					<li><a href="#">User2</a></li>
-					<li><a href="#">User3</a></li>
-					<li><a href="#">User4</a></li>
-					<li><a href="#">User5</a></li>
-					<li><a href="#">User6</a></li>
-					<li><a href="#">User7</a></li>
-					<li><a href="#">User8</a></li>
-					<li><a href="#">User9</a></li>
+					<?php 
+					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+					$count = 0;
+					if($query_out1 = mysql_query($friends)){
+						while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){
+							$online = "select first_name,last_name from Profile,User where Profile.user_id = User.user_id and User.user_id = \"".$_SESSION['friends']['id']."\" and User.online = 1;";
+							if($query_out3 = mysql_query($online)){
+								if($_SESSION['online'] = mysql_fetch_assoc($query_out3)){
+								echo "<li><a id=\"of$count\" href=\"#\">".$_SESSION['online']['first_name']." ".$_SESSION['online']['last_name']."</a></li>";
+								$count += 1;
+								}
+							}
+					}}?>
 				</ul>
 			</div>
-			<input style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
-			</div>
+			<input id="onlineSearch" style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
+	  </div>
 	  </div>
 
   </div>
   </div>
+  
+  <script>
+	$(document).ready(function() {
+		$('.datepicker').datepicker();
+	  });
+  </script>
   </body>
 </html>
