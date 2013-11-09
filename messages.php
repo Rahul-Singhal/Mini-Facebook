@@ -375,6 +375,52 @@
 
 <script type="text/javascript">
 
+function showmessages(){
+   //Send an XMLHttpRequest to the 'show-message.php' file
+   var otherid = "<?php echo $other_id ; ?>";
+   var showurl = 'show-messages.php?other='+otherid;
+   if(window.XMLHttpRequest){
+      xmlhttp = new XMLHttpRequest();
+      xmlhttp.open("GET",showurl,false);
+      xmlhttp.send(null);
+   }
+   else{
+      xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+      xmlhttp.open("GET",showurl,false);
+      xmlhttp.send();
+   }
+   //Replace the content of the messages with the response from the 'show-messages.php' file
+   document.getElementById('messageArea').innerHTML = xmlhttp.responseText;
+   //Repeat the function each 3 seconds
+   setTimeout('showmessages()',3000);
+}
+//Start the showmessages() function
+showmessages();
+
+function online(){
+   //Send an XMLHttpRequest to the 'show-message.php' file
+   if(window.XMLHttpRequest){
+      xmlhttp = new XMLHttpRequest();
+      xmlhttp.open("GET","online.php",false);
+      xmlhttp.send(null);
+   }
+   else{
+      xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+      xmlhttp.open("GET","online.php",false);
+      xmlhttp.send();
+   }
+   //Replace the content of the messages with the response from the 'show-messages.php' file
+   document.getElementById('online-friends').innerHTML = xmlhttp.responseText;
+   //Repeat the function each 3 seconds
+   setTimeout('online()',3000);
+}
+
+online();
+
+function cleartext(){
+	document.getElementById("message").value = "";
+}
+
 function send(){
    //Send an XMLHttpRequest to the 'send.php' file with all the required informations
    console.log("yp there");
@@ -389,7 +435,10 @@ function send(){
       xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
       xmlhttp.open("GET",sendto,false);
       xmlhttp.send();
-   }}
+   }
+   cleartext();
+}
+ 
 </script>
   
    

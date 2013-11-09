@@ -318,5 +318,32 @@
 
   </div>
   </div>
+
+
+	<script type="text/javascript">
+
+	function online(){
+	   //Send an XMLHttpRequest to the 'show-message.php' file
+	   if(window.XMLHttpRequest){
+		  xmlhttp = new XMLHttpRequest();
+		  xmlhttp.open("GET","online.php",false);
+		  xmlhttp.send(null);
+	   }
+	   else{
+		  xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		  xmlhttp.open("GET","online.php",false);
+		  xmlhttp.send();
+	   }
+	   //Replace the content of the messages with the response from the 'show-messages.php' file
+	   document.getElementById('online-friends').innerHTML = xmlhttp.responseText;
+	   //Repeat the function each 10 seconds
+	   setTimeout('online()',10000);
+	}
+
+	online();
+	 
+	</script>
+
+
   </body>
 </html>
