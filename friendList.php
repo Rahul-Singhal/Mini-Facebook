@@ -145,14 +145,19 @@
 						  </a>
 						<ul class="dropdown-menu">
 						    <?php
+						  	foreach($_SESSION['CurEvent'] as $ce){
+						  		$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$ce[0]."\" ");
+								$row1 = mysql_fetch_array($result1);
+						  		echo "<li><a href=\"Event.php?event_id=".$ce[2]."\">Event <b>".$ce[1]."</b> by ".$row1['first_name']." ".$row1['last_name']."<br/>is scheduled <b>Today</b>"."</a></li>";
+						  	}
 						  	$count = 0;
 							  foreach($_SESSION['notifications'] as $noti){
 							  	if($count > 6) break;
 							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$noti[1]."\" ");
 								$row1 = mysql_fetch_array($result1);
-							  	if($noti[0]==='post')echo "<li><a href=\"#\">New post by ".$row1['first_name']." ".$row1['last_name']."<br/>".$noti[2]."</a></li>";
-							  	else if($noti[0]==='comment')echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." commented on a post.<br/>".$noti[2]."</a></li>";
-							  	else echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." created an event.<br/>".$noti[2]."</a></li>";
+							  	if($noti[0]==='post')echo "<li><a href=\"post.php?post_id=".$noti[4]."\">New post by ".$row1['first_name']." ".$row1['last_name']."<br/>".$noti[2]."</a></li>";
+							  	else if($noti[0]==='comment')echo "<li><a href=\"post.php?post_id=".$noti[4]."\">".$row1['first_name']." ".$row1['last_name']." commented on a post.<br/>".$noti[2]."</a></li>";
+							  	else echo "<li><a href=\"Event.php?event_id=".$noti[4]."\">".$row1['first_name']." ".$row1['last_name']." created an event.<br/>".$noti[2]."</a></li>";
 							  	$count++;
 							  }
 						  ?>
@@ -343,7 +348,7 @@
 	   //Replace the content of the messages with the response from the 'show-messages.php' file
 	   document.getElementById('online-friends').innerHTML = xmlhttp.responseText;
 	   //Repeat the function each 10 seconds
-	   setTimeout('online()',10000);
+	   setTimeout('online()',3000);
 	}
 
 	online();

@@ -54,6 +54,7 @@
     <script src="js/jquery.js" type="text/javascript" charset="utf-8"></script>
     <script src="js/bootstrap-datepicker.js" type="text/javascript" charset="utf-8"></script>
     <script src="js/jquery.lightbox_me.js" type="text/javascript" charset="utf-8"></script>  
+    <script type="text/javascript" src="js/userId.js"></script>
     <script type="text/javascript" charset="utf-8">
     $(function() {
           $('#top').click(function(e) {
@@ -87,9 +88,10 @@
             <div class="well" id="create-form">
                   <h3> Welcome to Mini-Facebook</h3>
                   <h4> Connect with your friends and the world around you. </h4>
+                  <div style="color:red; font-weight:bold;" id="userIdMessage"></div>
                   <form action="createUser.php" method="post">
                     <label>User-ID</label>
-                    <input type="text" value="" class="input-xlarge" name="new_userID">
+                    <input type="text" value="" class="input-xlarge" id="newUserID" name="new_userID">
                     <label>First Name</label>
                     <input type="text" value="" class="input-xlarge" name="new_userFirst">
                     <label>Last Name</label>

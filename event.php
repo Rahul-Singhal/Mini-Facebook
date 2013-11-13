@@ -151,7 +151,7 @@
 						    </form>
 					  </li>
 					  <li><a href="feed.php" style="color:white;">Home</a></li>
-					  <li class="active"><a href="profile.php">Profile</a></li>
+					  <li ><a style="color:white;" href="profile.php">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
 						   data-toggle="dropdown"
@@ -161,14 +161,19 @@
 						  </a>
 						<ul class="dropdown-menu">
 						  <?php
+						  	foreach($_SESSION['CurEvent'] as $ce){
+						  		$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$ce[0]."\" ");
+								$row1 = mysql_fetch_array($result1);
+						  		echo "<li><a href=\"Event.php?event_id=".$ce[2]."\">Event <b>".$ce[1]."</b> by ".$row1['first_name']." ".$row1['last_name']."<br/>is scheduled <b>Today</b>"."</a></li>";
+						  	}
 						  	$count = 0;
 							  foreach($_SESSION['notifications'] as $noti){
 							  	if($count > 6) break;
 							  	$result1 = mysql_query("select `first_name`,`last_name` from `Profile` where user_id = \"".$noti[1]."\" ");
 								$row1 = mysql_fetch_array($result1);
-							  	if($noti[0]==='post')echo "<li><a href=\"#\">New post by ".$row1['first_name']." ".$row1['last_name']."<br/>".$noti[2]."</a></li>";
-							  	else if($noti[0]==='comment')echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." commented on a post.<br/>".$noti[2]."</a></li>";
-							  	else echo "<li><a href=\"#\">".$row1['first_name']." ".$row1['last_name']." created an event.<br/>".$noti[2]."</a></li>";
+							  	if($noti[0]==='post')echo "<li><a href=\"post.php?post_id=".$noti[4]."\">New post by ".$row1['first_name']." ".$row1['last_name']."<br/>".$noti[2]."</a></li>";
+							  	else if($noti[0]==='comment')echo "<li><a href=\"post.php?post_id=".$noti[4]."\">".$row1['first_name']." ".$row1['last_name']." commented on a post.<br/>".$noti[2]."</a></li>";
+							  	else echo "<li><a href=\"Event.php?event_id=".$noti[4]."\">".$row1['first_name']." ".$row1['last_name']." created an event.<br/>".$noti[2]."</a></li>";
 							  	$count++;
 							  }
 						  ?>
@@ -259,10 +264,18 @@
 					<h3> Upcoming Events </h3>
 					<?php if($query_out = mysql_query($event_info)){
 							while($_SESSION['event_info']= mysql_fetch_assoc($query_out)){
-								$creator = "SELECT first_name,last_name from Profile,Event where Profile.user_id = Event.sender_id and sender_id = \"".$_SESSION['event_info']['sender_id']."\";";
+								$creator = "SELECT first_name,last_name,user_id from Profile,Event where Profile.user_id = Event.sender_id and sender_id = \"".$_SESSION['event_info']['sender_id']."\";";
 								$query_out3 = mysql_query($creator);
 								$_SESSION['creator'] = mysql_fetch_assoc($query_out3);
-								echo "<dl class=\"dl-horizontal\">
+								// if($_SESSION['creator']['user_id'] == $_SESSION['userId'])
+								echo "<div>";
+								$eventidd = $_SESSION['event_info']['event_id'];
+								if($_SESSION['creator']['user_id'] == $_SESSION['userId'])
+								echo "<form action='deleteEvent.php' method='post'>
+								<input type='hidden' name='eventId' value='$eventidd'>
+								<button type='submit' class='btn btn-danger' style=\"float:right;\">Cancel Event</button>
+								</form>";
+								echo "<div><dl class=\"dl-horizontal\">
 								<dt>Event Name</dt>
 								<dd>".$_SESSION['event_info']['event_name']." </dd>
 								<dt>Date</dt>
@@ -281,7 +294,8 @@
 									".$_SESSION['event_info']['pin']."
 								</address>
 								</dd>
-								</dl>";}}?>
+								</dl></div></div>
+								";}}?>
 					
 					
 					
@@ -377,7 +391,7 @@
 			//Replace the content of the messages with the response from the 'show-messages.php' file
 			document.getElementById('online-friends').innerHTML = xmlhttp.responseText;
 			//Repeat the function each 10 seconds
-			setTimeout('online()',10000);
+			setTimeout('online()',3000);
 		}
 
 		online();

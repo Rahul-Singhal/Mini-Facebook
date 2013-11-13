@@ -277,7 +277,7 @@
 			//Replace the content of the messages with the response from the 'show-messages.php' file
 			document.getElementById('online-friends').innerHTML = xmlhttp.responseText;
 			//Repeat the function each 10 seconds
-			setTimeout('online()',10000);
+			setTimeout('online()',3000);
 		}
 
 		online();

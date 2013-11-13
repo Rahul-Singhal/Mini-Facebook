@@ -22,8 +22,9 @@
       						$query = "INSERT INTO `Posts` VALUES ('".$_SESSION['userId']."',$postID)";
       						if(mysql_query($query)){
       							//find the friends of poster
-      							$query = "(SELECT `user_id2` AS user FROM `Friends_with` WHERE `user_id1`= '".$_SESSION['userId']."') UNION (SELECT `user_id1` AS user FROM `Friends_with` WHERE `user_id2`= '".$_SESSION['userId']."')";
-      							//echo $query;
+      							$query = "(SELECT `user_id2` AS user FROM `Friends_with` WHERE `user_id1`= '".$_SESSION['userId']."') UNION (SELECT `user_id1` AS user FROM `Friends_with` WHERE `user_id2`= '".$_SESSION['userId']."') UNION (SELECT `followedby_user_id` AS user FROM `Follow` WHERE `followed_user_id`= '".$_SESSION['userId']."')";
+      							// echo $query;
+      							// exit;
       							if($query_out = mysql_query($query)){
       								while($row = mysql_fetch_assoc($query_out)){
       									$query1 = "INSERT INTO `Post_notification` VALUES ($postID,'".$row['user']."',0 )";

@@ -10,6 +10,7 @@
       session_start();
       $_SESSION['userId']=$_POST['username'];
       makeUserOnline($_SESSION['userId']);
+      $_SESSION['CurEvent']=array();
       header('Location: profile.php');
       exit();
     }else{

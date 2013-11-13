@@ -3,26 +3,31 @@
 	if(!isset($_SESSION['userId'])){
 		header('Location: index.php');
 	}
-
+	
+	require "connect.inc.php";
 	require "getNotificationsAndRequests.php";
 
-	require "connect.inc.php";
+	$checkValid = "SELECT * FROM Event_Notification WHERE `event_id`=".$_GET['event_id']." AND `receiver_id` = '".$_SESSION['userId']."'";
+	// echo $checkValid;
+	// exit;
+	$out=mysql_query($checkValid);
+	// echo $out;
+	// exit;
+	if($row = mysql_fetch_assoc($out)){
 
-	$username = "select first_name,last_name from Profile where user_id = \"".$_SESSION['userId']."\";";
-	$_SESSION['username'] = mysql_fetch_assoc(mysql_query($username));
-	$query = "select * from (select post_id,max(date_time) as date_time from (SELECT post_id,date_time FROM `Post`,`Posts` WHERE Post.post_id not in
-			(select post_id from Comment) and `post_id` = `posts_post_id` and user_id= \"".$_SESSION['userId']."\" 
-			UNION SELECT Post.post_id,date_time FROM `Post`,`Post_notification` where Post.post_id not in
-			(select post_id from Comment) and `Post`.`post_id` = `Post_notification`.`post_id` AND receiver_id= \"".$_SESSION['userId']."\" UNION	
-			select post_id,date_time from Comment where post_id in 
-			(SELECT post_id FROM `Post`,`Posts` WHERE `post_id` = `posts_post_id` and user_id= \"".$_SESSION['userId']."\" 
-			UNION SELECT Post.post_id FROM `Post`,`Post_notification` where 
-			`Post`.`post_id` = `Post_notification`.`post_id` AND receiver_id= \"".$_SESSION['userId']."\" ))t1 group by t1.post_id)t2 order by t2.date_time desc ;";
+	}
+	else{
+		header('Location: event.php');
+	}
 
+	$event_info = "SELECT * from Event,Event_Notification where Event.event_date_time > CURRENT_TIMESTAMP AND Event.event_id = Event_Notification.event_id AND Event.event_id = ".$_GET['event_id']." AND (receiver_id = \"".$_SESSION['userId']."\" OR sender_id = \"".$_SESSION['userId']."\") GROUP BY `Event`.`event_id` ORDER BY Event.event_date_time;";
+	// echo "SELECT * from Event,Event_Notification where Event.event_id = Event_Notification.event_id and receiver_id = \"".$_SESSION['userId']."\";";
+	// echo $event_info;
+	// exit;
+	$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
 	
 	
 ?>
-
 
 <!DOCTYPE html>
 <html>
@@ -30,6 +35,7 @@
     <title>Mini-Facebook</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
+	<link href="css/datepicker.css" rel="stylesheet">
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
 	<style type="text/css">
 	body, html {
@@ -41,6 +47,12 @@
 		max-height: 90%;
 		overflow: auto;
 	}
+	
+	a{
+	text-decoration:none;
+	color:"white";
+	}
+	
 	#top {
 		/*background-color: #4c66a4;
 		color: #ffffff;*/
@@ -118,8 +130,9 @@
 
 	<script src="js/jquery.js" type="text/javascript"></script>
    	<script src="js/bootstrap.min.js" type="text/javascript"></script>
-   	<script src="js/jquery.slimscroll.js" type="text/javascript"></script>
-   	<script type="text/javascript" src="js/liveSearch.js"></script>
+   	<script src="js/bootstrap-datepicker.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/jquery.slimscroll.js" type="text/javascript"></script>
+	<script type="text/javascript" src="js/liveSearch.js"></script>
 
    	<script>
 		function onLoadFunction(){
@@ -132,6 +145,7 @@
 	      	 wrapperClass:'slimScrollDiv3'
 	      	});	
 		}
+					
 	</script>
   </head>
   <body onload="onLoadFunction()">
@@ -142,7 +156,7 @@
 				<div >
 					<div class="navbar">
 					<div class="navbar-inner">
-						<a class="brand offset1" href="#">Mini-Facebook</a>
+						<a class="brand offset1" href="feed.php">Mini-Facebook</a>
 					<ul class="nav">
 					  <li>
 					       <form class="navbar-search pull-left">
@@ -150,7 +164,7 @@
 						    	<ul id="results"></ul>
 						    </form>
 					  </li>
-					  <li class="active"><a href="#" style="color:white;">Home</a></li>
+					  <li><a href="feed.php" style="color:white;">Home</a></li>
 					  <li ><a style="color:white;" href="profile.php">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
@@ -209,103 +223,97 @@
 			<div class="row-fluid " id="panelGuest">
 				<div class="span3" style="border-right:4px solid #007AA3;">
 					<?php
-						echo '<img src="data:image/jpeg;base64,'.base64_encode( $_SESSION['user_profile']['image'] ) . '" width="80%" class="img-polaroid"/>';
+					echo '<img src="data:image/jpeg;base64,'.base64_encode( $_SESSION['user_profile']['image'] ) . '" width="80%" class="img-polaroid"/>';
 					?>
 					<br>
 					<br>
 					<ul class="nav nav-list" id="left-menu">
 						<li class="nav-header">Favorites</li>
-						<li class="active"><a href="#">New Feed</a></li>
+						<li><a href="feed.php">New Feed</a></li>
 						<li><a href="messages.php?receiver=empty">Messages</a></li>
 						
 						<li class="nav-header">Events</li>
-						<li><a href="event.php">Your Events</a></li>
-						
+						<li class="active"><a href="event.php">Your Events</a></li>
+
 						<li class="nav-header">Friends & Followers</li>
 						<li><a href="friendList.php">Friend List</a></li>
-						<li><a href="followerList.php">Follower List</a></li>
+						<li ><a href="followerList.php">Follower List</a></li>
 						
 					</ul>
 				</div>		
 				<div class="span7 offset1">
+					<h3> Create an Event </h3>
 					<div>
-					<form method="post" action="newPost.php">
-					<textarea name="new_post" rows="6" style="width:100%;" <?php echo "placeholder=\"Hey! ".$_SESSION['username']['first_name']." ".$_SESSION['username']['last_name']."... Share your thoughts!!\"";?> ></textarea>
-					<button class="btn btn-inverse" type="submit"style="margin-bottom:30px; width:125px;">Post!</button>
+					<form method="post" action="newEvent.php">
+					
+					<textarea name="event-description" rows="6" style="width:55%; float:left;" placeholder="Description of the event"></textarea>
+					
+					<input type="text" name="event-name" style="float:right; width:40%;" placeholder="Event name">
+					<br>
+					<br>
+					<input type="text" name="event-date" class="datepicker" style="float:right; width:40%;" placeholder="yyyy-mm-dd" data-date-format="yyyy-mm-dd">
+					<br>
+					<br>
+					<input type="number" name="event-time-hours" style="float:left; width:18%; margin-left:5px;" placeholder="hh" min="0" max="23">
+					<input type="number" name="event-time-mins" style="float:right; width:18%;" placeholder="mm" min="0" max="59">
+					
+					<div style="clear:both"></div>
+					
+					<input type="text" name="event-house-no" style="float:left; width:47%;" placeholder="House Number">
+					<input type="text" name="event-street" style="float:right; width:47%;" placeholder="Street">
+					<br>
+					<input type="text" name="event-city" style="float:left; width:47%;" placeholder="City">
+					<input type="text" name="event-state" style="float:right; width:47%;" placeholder="State">
+					<br>
+					<input type="number" name="event-pin" style="float:left; width:47%;" placeholder="Pin Code">
+					<input type="text" name="event-country" style="float:right; width:47%;" placeholder="Country">
+					<br>
+
+					<br>
+					<button class="btn btn-inverse" type="submit"style="margin-bottom:30px; width:125px;">Create!</button>
 					</form>
 					</div>
+				
+				
+					<h3> Upcoming Events </h3>
+					<?php if($query_out = mysql_query($event_info)){
+							while($_SESSION['event_info']= mysql_fetch_assoc($query_out)){
+								$creator = "SELECT first_name,last_name,user_id from Profile,Event where Profile.user_id = Event.sender_id and sender_id = \"".$_SESSION['event_info']['sender_id']."\";";
+								$query_out3 = mysql_query($creator);
+								$_SESSION['creator'] = mysql_fetch_assoc($query_out3);
+								// if($_SESSION['creator']['user_id'] == $_SESSION['userId'])
+								echo "<div>";
+								$eventidd = $_SESSION['event_info']['event_id'];
+								if($_SESSION['creator']['user_id'] == $_SESSION['userId'])
+								echo "<form action='deleteEvent.php' method='post'>
+								<input type='hidden' name='eventId' value='$eventidd'>
+								<button type='submit' class='btn btn-danger' style=\"float:right;\">Cancel Event</button>
+								</form>";
+								echo "<div><dl class=\"dl-horizontal\">
+								<dt>Event Name</dt>
+								<dd>".$_SESSION['event_info']['event_name']." </dd>
+								<dt>Date</dt>
+								<dd>".$_SESSION['event_info']['event_date_time']." </dd>
+								<dt> Created by </dt>
+								<dd> ".$_SESSION['creator']['first_name']." ".$_SESSION['creator']['last_name']." </dd>
+								<dt> Description </dt>
+								<dd>".$_SESSION['event_info']['description']."</dd>
+								<dt> Address </dt>
+								<dd> <address>
+									".$_SESSION['event_info']['house_no']."<br>
+									".$_SESSION['event_info']['street']."<br>
+									".$_SESSION['event_info']['city']."<br>
+									".$_SESSION['event_info']['state']."<br>
+									".$_SESSION['event_info']['country']."<br>
+									".$_SESSION['event_info']['pin']."
+								</address>
+								</dd>
+								</dl></div></div>
+								";}}?>
 					
-					<?php if($query_out1 = mysql_query($query)){
-							while($_SESSION['post'] = mysql_fetch_assoc($query_out1)){	
-								$post_info = "select post_id,date_time,likes,data from Post where post_id = \"".$_SESSION['post']['post_id']."\";";
-								$query_out4 = mysql_query($post_info);
-								$_SESSION['post_info'] = mysql_fetch_assoc($query_out4);
-								$post_sender = "SELECT first_name,last_name,image from Profile,Posts where Profile.user_id = Posts.user_id and posts_post_id = \"".$_SESSION['post_info']['post_id']."\";";
-								$query_out2 = mysql_query($post_sender);
-								$_SESSION['post_sender'] = mysql_fetch_assoc($query_out2);
-					echo "<div class=\"post\" id = \"".$_SESSION['post_info']['post_id']."\">
-						<div class=\"media\">
-							<a class=\"pull-left\" href=\"#\">";
-							echo '<img src="data:image/jpeg;base64,'.base64_encode( $_SESSION['post_sender']['image'] ) . '" width="64px" height="64px" class="img-polaroid"/>';
-							echo "</a>
-							<div class=\"media-body\">
-									  
-	  
-    
-								<h4 class=\"media-heading\">".$_SESSION['post_sender']['first_name']." ".$_SESSION['post_sender']['last_name']."</h4>"	
-								.$_SESSION['post_info']['data']."
-								<div class=\"like-dislike\">
-									<form method=\"post\" action=\"like.php\">
-									<button type=\"submit\" name=\"like\" class=\"btn btn-success btn-mini\">
-										<i class=\"icon-large icon-thumbs-up\"></i> Like									
-									</button>
-									<button type=\"submit\" name=\"dislike\" class=\"btn btn-danger btn-mini pull-right\">
-										<i class=\"icon-large icon-thumbs-down\"></i> Dislike									
-									</button>
-									<input type=\"hidden\" name=\"post_id\" class=\"span8\" style=\"margin:5px 10px 5px 15px;\" value=\"".$_SESSION['post_info']['post_id']."\">
-									</form>
-								</div>
-								<div style=\"background-color:#3D4A6C; padding:5px 10px 5px 10px; border-radius:10px;\">
-									<div>
-										<span class=\"label label-info\">".$_SESSION['post_info']['likes']." likes </span>
-										<span class=\"pull-right\">
-											<span class=\"label label-success\">".date('F j,Y,g:i a',strtotime($_SESSION['post_info']['date_time']))."</span>
-										</span>
-									</div>
-									<ul class=\"comments\">";
-									$comment_query = "Select * FROM Comment WHERE Comment.post_id = \"".$_SESSION['post_info']['post_id']."\" ORDER BY date_time ASC;";
-										$index = 1;
-										if($query_out = mysql_query($comment_query)){
-												while($_SESSION['comment_info'] = mysql_fetch_assoc($query_out)){
-												$comment_sender = "SELECT first_name, last_name,image from Profile,Comment where Profile.user_id = Comment.sender_id and Comment.post_id = \"".$_SESSION['comment_info']['post_id']."\" and Comment.comment_id = \"".$_SESSION['comment_info']['comment_id']."\";";
-												$query_out3 = mysql_query($comment_sender);
-												$_SESSION['comment_sender'] = mysql_fetch_assoc($query_out3);
-										echo "<li id = \"".$_SESSION['comment_info']['post_id'].$_SESSION['comment_info']['comment_id']."\">
-											<span class=\"label label-default\">".$_SESSION['comment_sender']['first_name']." ".$_SESSION['comment_sender']['last_name']."</span>".$_SESSION['comment_info']['data']."
-											<br/>
-											<span class=\"comment-timestamp\">".date('F j,Y,g:i a',strtotime($_SESSION['comment_info']['date_time']))."</span>
-										</li>";
-											//$index = (int)($_SESSION['comment_info']['comment_id']);
-											$index++;
-										
-										 }} 
-										
-										echo "<li name = \"".$_SESSION['post_info']['post_id'].$index."\">
-											<form method=\"post\" action=\"newComment.php\">
-											<span class=\"label label-default\">".$_SESSION['username']['first_name']." ".$_SESSION['username']['last_name']."</span>
-											<input name=\"commentData\" type=\"text\" onkeydown=\"if (event.keyCode == 13) { this.form.submit(); return false; }\" placeholder=\"Comment here!\" style=\"margin:5px 0px 5px 0px; width:74%;\">
-											<input type=\"hidden\" name=\"comment_id\" class=\"span8\" style=\"margin:5px 10px 5px 15px;\" value=\"".$_SESSION['post_info']['post_id']."_".$index."\">
-											</form>
-										</li>
-									</ul>
-								</div>
-							</div>
-							
-						</div>
-					</div>
-					<hr/>";}}?>
-
-
+					
+					
+					
 				</div>
 			</div>
 	  </div>
@@ -372,33 +380,36 @@
 			</div>
 			<input id="onlineSearch" style="width:90%; margin-top:3%; margin-left:5%;" placeholder="Search Friend.." />
 	  </div>
+	  </div>
 
   </div>
+  </div>
   
-  
-	<script type="text/javascript">
+  <script>
+	$(document).ready(function() {
+		$('.datepicker').datepicker();
+	  });
+	  
+	  function online(){
+			//Send an XMLHttpRequest to the 'show-message.php' file
+			if(window.XMLHttpRequest){
+				xmlhttp = new XMLHttpRequest();
+				xmlhttp.open("GET","online.php",false);
+				xmlhttp.send(null);
+			}
+			else{
+				xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+				xmlhttp.open("GET","online.php",false);
+				xmlhttp.send();
+			}
+			//Replace the content of the messages with the response from the 'show-messages.php' file
+			document.getElementById('online-friends').innerHTML = xmlhttp.responseText;
+			//Repeat the function each 10 seconds
+			setTimeout('online()',3000);
+		}
 
-	function online(){
-	   //Send an XMLHttpRequest to the 'show-message.php' file
-	   if(window.XMLHttpRequest){
-		  xmlhttp = new XMLHttpRequest();
-		  xmlhttp.open("GET","online.php",false);
-		  xmlhttp.send(null);
-	   }
-	   else{
-		  xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-		  xmlhttp.open("GET","online.php",false);
-		  xmlhttp.send();
-	   }
-	   //Replace the content of the messages with the response from the 'show-messages.php' file
-	   document.getElementById('online-friends').innerHTML = xmlhttp.responseText;
-	   //Repeat the function each 10 seconds
-	   setTimeout('online()',3000);
-	}
-
-	online();
-	 
-	</script>
-  
+		online();
+	  
+  </script>
   </body>
 </html>
