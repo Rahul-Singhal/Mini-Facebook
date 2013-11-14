@@ -11,7 +11,7 @@
       $_SESSION['user_profile'] = mysql_fetch_assoc($query_out);
     }
 	$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" 
-				UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+				UNION ALL select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
 ?>
 
 <html>
@@ -310,7 +310,7 @@
 				<ul class="nav nav-list" id="left-menu"  >
 					<li class="nav-header">Online Friends</li>
 					<?php 
-					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION ALL select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
 					$count = 0;
 					if($query_out1 = mysql_query($friends)){
 						while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){

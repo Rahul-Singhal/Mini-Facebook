@@ -15,12 +15,20 @@
 			//echo $query;
 			if(mysql_query($query)){
 				$query = "(SELECT `user_id2` AS user FROM `Friends_with` WHERE `user_id1`= '".$_SESSION['userId']."') UNION (SELECT `user_id1` AS user FROM `Friends_with` WHERE `user_id2`= '".$_SESSION['userId']."')";
+				$flag = false;
 				if($query_out = mysql_query($query)){
 					while($row = mysql_fetch_assoc($query_out)){
 						$query1 = "INSERT INTO `Comment_notification` VALUES ('$post[0]','$post[1]','".$row['user']."',0 )";
 						if(!mysql_query($query1)){
-							echo "error!!";
-							exit;
+							$flag = true;
+						}
+					}
+					if($flag){
+						while($row = mysql_fetch_assoc($query_out)){
+							$query1 = "DELETE IF EXISTS FROM `Comment_notification` VALUES ('$post[0]','$post[1]','".$row['user']."',0 )";
+							if(!mysql_query($query1)){
+								$flag = true;
+							}
 						}
 					}
 					header('Location: feed.php');

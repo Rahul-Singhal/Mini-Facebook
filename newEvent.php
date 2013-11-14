@@ -9,17 +9,17 @@
       $_SESSION['user_profile'] = mysql_fetch_assoc($query_out);
     }
 	
-	$event_name = $_POST['event-name'];
-	$event_time = $_POST['event-date'];
-	$event_time = $event_time . " " . $_POST['event-time-hours'] . ":" . $_POST['event-time-mins'];
+	$event_name = mysql_real_escape_string($_POST['event-name']);
+	$event_time = mysql_real_escape_string($_POST['event-date']);
+	$event_time = $event_time . " " . mysql_real_escape_string($_POST['event-time-hours']) . ":" . mysql_real_escape_string($_POST['event-time-mins']);
 	echo $event_time;
-	$description = $_POST['event-description'];
-	$house_no = $_POST['event-house-no'];
-	$street = $_POST['event-street'];
-	$pin_code = $_POST['event-pin'];
-	$city = $_POST['event-city'];
-	$state = $_POST['event-state'];
-	$country = $_POST['event-country'];
+	$description = mysql_real_escape_string($_POST['event-description']);
+	$house_no = mysql_real_escape_string($_POST['event-house-no']);
+	$street = mysql_real_escape_string($_POST['event-street']);
+	$pin_code = mysql_real_escape_string($_POST['event-pin']);
+	$city = mysql_real_escape_string($_POST['event-city']);
+	$state = mysql_real_escape_string($_POST['event-state']);
+	$country = mysql_real_escape_string($_POST['event-country']);
 
 	$query = "INSERT INTO Event (sender_id, event_name, event_date_time, description, house_no, street, pin, city, state, country) 
 	VALUES ('" . $_SESSION['userId'] . "','$event_name','$event_time','$description','$house_no','$street','$pin_code','$city','$state', '$country')";

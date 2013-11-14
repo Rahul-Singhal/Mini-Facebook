@@ -175,6 +175,32 @@
 			  else $isfollowed = 'false';
 			}
 			else $isfollowed = 'false';
+
+
+			$isrelatedqry = "select user_id1 as id from Relationship_with where user_id2= \"".$_SESSION['userId']."\" and user_id1 = \"".$user_id_page."\"
+							UNION select user_id2 as id from Relationship_with where user_id1= \"".$_SESSION['userId']."\" and user_id2 = \"".$user_id_page."\";";
+			
+			if($query_out_isrelated = mysql_query($isrelatedqry)){
+			  $related = mysql_fetch_assoc($query_out_isrelated);
+			  if(isset($related) && !empty($related)){
+				$isrelated = 'true';
+			  }
+			  else $isrelated = 'false';
+			}
+			else $isrelated = 'false';
+
+			$isrelatedotherqry = "select user_id1 as id from Relationship_with where user_id2= \"".$_SESSION['userId']."\" and user_id1 <> \"".$user_id_page."\"
+				UNION select user_id2 as id from Relationship_with where user_id1= \"".$_SESSION['userId']."\" and user_id2 <> \"".$user_id_page."\"
+				UNION select user_id1 as id from Relationship_with where user_id2<> \"".$_SESSION['userId']."\" and user_id1 = \"".$user_id_page."\"
+				UNION select user_id2 as id from Relationship_with where user_id1<> \"".$_SESSION['userId']."\" and user_id2 = \"".$user_id_page."\";";
+			if($query_out_isrelatedother = mysql_query($isrelatedotherqry)){
+			  $relatedother = mysql_fetch_assoc($query_out_isrelatedother);
+			  if(isset($relatedother) && !empty($relatedother)){
+				$isrelatedother = 'true';
+			  }
+			  else $isrelatedother = 'false';
+			}
+			else $isrelatedother = 'false';
 			  
 			
 			//////////////////////////////////////////////
@@ -212,7 +238,7 @@
 						    	<ul id="results"></ul>
 						    </form>
 					  </li>
-					  <li><a href="feed.php" style="color:white;">Home <span class="badge">42</span> </a></li>
+					  <li><a href="feed.php" style="color:white;">Home</a></li>
 					  <li class="active"><a href="profile.php">Profile</a></li>
 					  <li class="dropdown">
 						<a class="dropdown-toggle"
@@ -405,6 +431,30 @@
 							  <i class='icon-ok-circle'></i> Follow
 							</button>
 							</form>";
+
+						if($isrelatedother == 'false'){
+
+							if ($isrelated == 'true')
+							echo "<form action='makeRelated.php' method='post' style='float:right; margin-right:12px' >
+								<input type='hidden' name='makeRelated' value='$user_id_page'>
+								<input type='hidden' name='adddel' value='del'>
+								<input type='hidden' name='redirect' value='profile.php'>
+								<button type='submit' class='btn btn-danger btn-mini'>
+								  <i class='icon-remove-circle'></i> End relationship
+								</button>
+								</form>";
+								
+							else if(!isset($self))
+							echo " <form action='makeRelated.php' method='post' style='float:right; margin-right:12px'>
+								<input type='hidden' name='makeRelated' value='$user_id_page'>
+								<input type='hidden' name='adddel' value='add'>
+								<input type='hidden' name='redirect' value='profile.php'>
+								<button type='submit' class='btn btn-success btn-mini'>
+								  <i class='icon-ok-circle'></i> Start relationship
+								</button>
+								</form>";
+						}
+
 					}
 					
 					////////////// REPLACE  /////////////////////////////////////////////////////////////
@@ -446,26 +496,11 @@
 							else echo "<dd>" . $_SESSION['user_profile']['dob'] . "</dd>"; 
 						?>
 						<dt>Relationship Status</dt>
-						<?php if (isset($editBI) && $editBI=='true' && !isset($user_id_page)){
-								//echo "<dd> <input type='number' name='relationStat' value='" . $_SESSION['user_profile']['relationship_status'] . "'> </dd>";
-								if ($_SESSION['user_profile']['relationship_status'] == 0){
-								echo "<dd>
-											<input type='radio' name='relationStat' value='0' checked='checked' ><span> Single</span><br>
-											<input type='radio' name='relationStat' value='1' ><span> In a relationship</span><br><br> 
-										   </dd>";
-								}
-								else{
-								echo "<dd>
-											<input type='radio' name='relationStat' value='0' ><span> Single</span><br>
-											<input type='radio' name='relationStat' value='1' checked='checked'><span> In a relationship</span><br><br> 
-										   </dd>";
-								}
-							}
-							else {
-								echo "<dd>";
-								if($_SESSION['user_profile']['relationship_status'] == 1) echo "In a relationship"; else echo "Single"; 
-								echo "</dd>"; 
-							}
+						<?php
+							echo "<dd>";
+							if($_SESSION['user_profile']['relationship_status'] == 1) echo "In a relationship"; else echo "Single"; 
+							echo "</dd>"; 
+							
 						?>
 						<dt>Gender</dt>
 						<?php if (isset($editBI) && $editBI=='true' && !isset($user_id_page)){

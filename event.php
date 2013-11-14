@@ -6,11 +6,11 @@
 	
 	require "connect.inc.php";
 	require "getNotificationsAndRequests.php";
-	$event_info = "SELECT * from Event,Event_Notification where Event.event_date_time > CURRENT_TIMESTAMP AND Event.event_id = Event_Notification.event_id and (receiver_id = \"".$_SESSION['userId']."\" OR sender_id = \"".$_SESSION['userId']."\") GROUP BY `Event`.`event_id` ORDER BY Event.event_date_time;";
+	$event_info = "SELECT * from Event,Event_Notification where DATE(Event.event_date_time) >= CURDATE() AND Event.event_id = Event_Notification.event_id and (receiver_id = \"".$_SESSION['userId']."\" OR sender_id = \"".$_SESSION['userId']."\") GROUP BY `Event`.`event_id` ORDER BY Event.event_date_time;";
 	// echo "SELECT * from Event,Event_Notification where Event.event_id = Event_Notification.event_id and receiver_id = \"".$_SESSION['userId']."\";";
 	// echo $event_info;
 	// exit;
-	$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+	$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION ALL select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
 	
 	
 ?>
@@ -350,7 +350,7 @@
 				<ul class="nav nav-list" id="left-menu"  >
 					<li class="nav-header">Online Friends</li>
 					<?php 
-					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION ALL select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
 					$count = 0;
 					if($query_out1 = mysql_query($friends)){
 						while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){

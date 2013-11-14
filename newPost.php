@@ -25,14 +25,23 @@
       							$query = "(SELECT `user_id2` AS user FROM `Friends_with` WHERE `user_id1`= '".$_SESSION['userId']."') UNION (SELECT `user_id1` AS user FROM `Friends_with` WHERE `user_id2`= '".$_SESSION['userId']."') UNION (SELECT `followedby_user_id` AS user FROM `Follow` WHERE `followed_user_id`= '".$_SESSION['userId']."')";
       							// echo $query;
       							// exit;
+                                                $flag = false;
       							if($query_out = mysql_query($query)){
       								while($row = mysql_fetch_assoc($query_out)){
       									$query1 = "INSERT INTO `Post_notification` VALUES ($postID,'".$row['user']."',0 )";
       									if(!mysql_query($query1)){
-      										echo "error!!";
-      										exit;
+      										$flag = ture;
       									}
       								}
+                                                      if($flag){
+                                                           while($row = mysql_fetch_assoc($query_out)){
+                                                                  $query1 = "DELETE IF EXISTS FROM `Post_notification` VALUES ($postID,'".$row['user']."',0 )";
+                                                                  if(!mysql_query($query1)){
+                                                                        header('Location: feed.php');
+                                                                        exit;
+                                                                  }
+                                                            } 
+                                                      }
       								header('Location: feed.php');
       								exit;
       							}

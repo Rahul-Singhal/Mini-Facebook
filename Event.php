@@ -20,11 +20,11 @@
 		header('Location: event.php');
 	}
 
-	$event_info = "SELECT * from Event,Event_Notification where Event.event_date_time > CURRENT_TIMESTAMP AND Event.event_id = Event_Notification.event_id AND Event.event_id = ".$_GET['event_id']." AND (receiver_id = \"".$_SESSION['userId']."\" OR sender_id = \"".$_SESSION['userId']."\") GROUP BY `Event`.`event_id` ORDER BY Event.event_date_time;";
+	$event_info = "SELECT * from Event,Event_Notification where Event.event_id = Event_Notification.event_id AND Event.event_id = ".$_GET['event_id']." AND (receiver_id = \"".$_SESSION['userId']."\" OR sender_id = \"".$_SESSION['userId']."\") GROUP BY `Event`.`event_id` ORDER BY Event.event_date_time;";
 	// echo "SELECT * from Event,Event_Notification where Event.event_id = Event_Notification.event_id and receiver_id = \"".$_SESSION['userId']."\";";
 	// echo $event_info;
 	// exit;
-	$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+	$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION ALL select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
 	
 	
 ?>
@@ -275,7 +275,7 @@
 					</div>
 				
 				
-					<h3> Upcoming Events </h3>
+					<h3> Your Events </h3>
 					<?php if($query_out = mysql_query($event_info)){
 							while($_SESSION['event_info']= mysql_fetch_assoc($query_out)){
 								$creator = "SELECT first_name,last_name,user_id from Profile,Event where Profile.user_id = Event.sender_id and sender_id = \"".$_SESSION['event_info']['sender_id']."\";";
@@ -364,7 +364,7 @@
 				<ul class="nav nav-list" id="left-menu"  >
 					<li class="nav-header">Online Friends</li>
 					<?php 
-					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
+					$friends = "select user_id1 as id from Friends_with where user_id2 = \"".$_SESSION['userId']."\" UNION ALL select user_id2 as id from Friends_with where user_id1 = \"".$_SESSION['userId']."\";";
 					$count = 0;
 					if($query_out1 = mysql_query($friends)){
 						while($_SESSION['friends'] = mysql_fetch_assoc($query_out1)){
